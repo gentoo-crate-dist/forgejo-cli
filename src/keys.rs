@@ -52,7 +52,7 @@ impl KeyInfo {
     }
 
     pub async fn get_api(&mut self, url: &Url) -> eyre::Result<forgejo_api::Forgejo> {
-        self.get_login(url)?.api_for(url).await.map_err(Into::into)
+        self.get_login(url)?.api_for().await.map_err(Into::into)
     }
 }
 
@@ -62,12 +62,14 @@ pub enum LoginInfo {
     Application {
         name: String,
         token: String,
+        api_url: Url,
     },
     OAuth {
         name: String,
         token: String,
         refresh_token: String,
         expires_at: time::OffsetDateTime,
+        api_url: Url,
     },
 }
 
@@ -79,23 +81,25 @@ impl LoginInfo {
         }
     }
 
-    pub async fn api_for(&mut self, url: &Url) -> eyre::Result<forgejo_api::Forgejo> {
+    pub async fn api_for(&mut self) -> eyre::Result<forgejo_api::Forgejo> {
         match self {
-            LoginInfo::Application { token, .. } => {
-                let api = forgejo_api::Forgejo::new(forgejo_api::Auth::Token(token), url.clone())?;
+            LoginInfo::Application { token, api_url, .. } => {
+                let api =
+                    forgejo_api::Forgejo::new(forgejo_api::Auth::Token(token), api_url.clone())?;
                 Ok(api)
             }
             LoginInfo::OAuth {
                 token,
                 refresh_token,
                 expires_at,
+                api_url,
                 ..
             } => {
                 if time::OffsetDateTime::now_utc() >= *expires_at {
-                    let api = forgejo_api::Forgejo::new(forgejo_api::Auth::None, url.clone())?;
-                    let (client_id, client_secret) = crate::auth::get_client_info_for(url)
+                    let api = forgejo_api::Forgejo::new(forgejo_api::Auth::None, api_url.clone())?;
+                    let (client_id, client_secret) = crate::auth::get_client_info_for(api_url)
                         .ok_or_else(|| {
-                            eyre::eyre!("Can't refresh token; no client info for {url}. How did this happen?")
+                            eyre::eyre!("Can't refresh token; no client info for {api_url}. How did this happen?")
                         })?;
                     let response = api
                         .oauth_get_access_token(forgejo_api::structs::OAuthTokenRequest::Refresh {
@@ -113,7 +117,8 @@ impl LoginInfo {
                     );
                     *expires_at = time::OffsetDateTime::now_utc() + expires_in;
                 }
-                let api = forgejo_api::Forgejo::new(forgejo_api::Auth::Token(token), url.clone())?;
+                let api =
+                    forgejo_api::Forgejo::new(forgejo_api::Auth::Token(token), api_url.clone())?;
                 Ok(api)
             }
         }

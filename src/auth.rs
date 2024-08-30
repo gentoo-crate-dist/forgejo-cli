@@ -18,6 +18,13 @@ pub enum AuthCommand {
         /// The key to add. If not present, the key will be read in from stdin.
         key: Option<String>,
     },
+    SetApiUrl {
+        /// Sets the URL to access for API calls for this host.
+        ///
+        /// This can be useful if the api is hosted on a subdomain, or if the
+        /// ssh and http access are on different domains.
+        url: url::Url,
+    },
     /// List all instances you're currently logged into
     List,
 }
@@ -65,10 +72,23 @@ impl AuthCommand {
                         crate::keys::LoginInfo::Application {
                             name: user,
                             token: key,
+                            api_url: host_url.clone(),
                         },
                     );
                 } else {
                     println!("key for {host} already exists");
+                }
+            }
+            AuthCommand::SetApiUrl { url } => {
+                let repo_info = crate::repo::RepoInfo::get_current(host_name, None, None)?;
+                let host_url = repo_info.host_url();
+                let host = crate::host_with_port(&host_url);
+                match keys.hosts.get_mut(host) {
+                    Some(key_info) => match key_info {
+                        crate::LoginInfo::OAuth { api_url, .. } => *api_url = url,
+                        crate::LoginInfo::Application { api_url, .. } => *api_url = url,
+                    },
+                    None => println!("Not signed in to {host}"),
                 }
             }
             AuthCommand::List => {
@@ -173,6 +193,7 @@ async fn oauth_login(
         token: response.access_token,
         refresh_token: response.refresh_token,
         expires_at,
+        api_url: host.clone(),
     };
     let domain = crate::host_with_port(&host);
     keys.hosts.insert(domain.to_owned(), login_info);
