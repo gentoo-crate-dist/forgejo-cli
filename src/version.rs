@@ -14,7 +14,7 @@ pub struct VersionCommand {
 
 const BUILD_TYPE: &str = match option_env!("BUILD_TYPE") {
     Some(s) => s,
-    None => "from source",
+    None => "crates.io",
 };
 
 impl VersionCommand {
