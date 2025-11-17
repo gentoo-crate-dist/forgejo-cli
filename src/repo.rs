@@ -534,16 +534,22 @@ impl RepoCommand {
                 cmd_clone_repo(&api, name, path, ssh).await?;
             }
             RepoCommand::Star { repo, remote } => {
-                let repo = RepoInfo::get_current(host_name, repo.as_ref(), remote.as_deref(), &keys)?;
+                let repo =
+                    RepoInfo::get_current(host_name, repo.as_ref(), remote.as_deref(), &keys)?;
                 let api = keys.get_api(repo.host_url()).await?;
-                let name = repo.name().ok_or_eyre("couldn't get repo name, please specify")?;
+                let name = repo
+                    .name()
+                    .ok_or_eyre("couldn't get repo name, please specify")?;
                 api.user_current_put_star(name.owner(), name.name()).await?;
                 println!("Starred {}/{}!", name.owner(), name.name());
             }
             RepoCommand::Unstar { repo, remote } => {
-                let repo = RepoInfo::get_current(host_name, repo.as_ref(), remote.as_deref(), &keys)?;
+                let repo =
+                    RepoInfo::get_current(host_name, repo.as_ref(), remote.as_deref(), &keys)?;
                 let api = keys.get_api(repo.host_url()).await?;
-                let name = repo.name().ok_or_eyre("couldn't get repo name, please specify")?;
+                let name = repo
+                    .name()
+                    .ok_or_eyre("couldn't get repo name, please specify")?;
                 api.user_current_delete_star(name.owner(), name.name())
                     .await?;
                 println!("Removed star from {}/{}", name.owner(), name.name());
