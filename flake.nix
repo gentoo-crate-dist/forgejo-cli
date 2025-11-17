@@ -38,6 +38,7 @@
         nativeBuildInputs = with pkgs; [
           cargo
           rustc
+          rustfmt
         ];
 
         # Required for rust-analyzer to work
