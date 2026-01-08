@@ -195,6 +195,12 @@ pub enum KeyCommand {
     Delete {
         // The ID of the key to view as shown in `user key list`
         id: i64,
+        /// Skip confirmation prompt
+        #[clap(long, short = 'f')]
+        force: bool,
+        /// Show what would be deleted without actually deleting
+        #[clap(long)]
+        dry_run: bool,
     },
 
     /// Upload an SSH key
@@ -239,6 +245,9 @@ pub enum GpgCommand {
         /// Don't ask for confirmation
         #[clap(short, long)]
         force: bool,
+        /// Show what would be deleted without actually deleting
+        #[clap(long)]
+        dry_run: bool,
     },
 
     /// Upload a new GPG key from your local keyring.
@@ -313,7 +322,9 @@ impl UserCommand {
             UserSubcommand::Key(cmd) => match cmd {
                 KeyCommand::List { verbose } => list_keys(&api, verbose).await?,
                 KeyCommand::View { id } => view_key(&api, id).await?,
-                KeyCommand::Delete { id } => delete_key(&api, id).await?,
+                KeyCommand::Delete { id, force, dry_run } => {
+                    delete_key(&api, id, force, dry_run).await?
+                }
                 KeyCommand::Upload {
                     keyfile,
                     title,
@@ -324,7 +335,9 @@ impl UserCommand {
             UserSubcommand::Gpg(cmd) => match cmd {
                 GpgCommand::List { verbose } => list_gpg(&api, verbose).await?,
                 GpgCommand::View { id } => view_gpg(&api, id).await?,
-                GpgCommand::Delete { id, force } => delete_gpg(&api, id, force).await?,
+                GpgCommand::Delete { id, force, dry_run } => {
+                    delete_gpg(&api, id, force, dry_run).await?
+                }
                 GpgCommand::Upload { key, no_verify } => upload_gpg(&api, key, no_verify).await?,
                 GpgCommand::Verify { id } => verify_gpg(&api, id).await?,
             },
@@ -1198,9 +1211,24 @@ fn print_key(key: &forgejo_api::structs::PublicKey, indent: usize) {
     }
 }
 
-async fn delete_key(api: &Forgejo, id: i64) -> eyre::Result<()> {
+async fn delete_key(api: &Forgejo, id: i64, force: bool, dry_run: bool) -> eyre::Result<()> {
+    if dry_run {
+        println!("Would delete SSH key with ID {}", id);
+        println!("\nRun with --force to actually delete.");
+        return Ok(());
+    }
+
+    if !force && !crate::yes_mode() {
+        let prompt = format!("Delete SSH key with ID {}?", id);
+        if !crate::prompt_bool(&prompt, false).await? {
+            println!("Aborted.");
+            return Ok(());
+        }
+    }
+
+    crate::verbose_log!("Deleting SSH key with ID {}", id);
     api.user_current_delete_key(id).await?;
-    println!("successfully deleted key with ID {id}");
+    println!("Successfully deleted key with ID {id}");
 
     Ok(())
 }
@@ -1429,14 +1457,23 @@ fn print_gpg(key: &forgejo_api::structs::GPGKey, indent_depth: usize) {
     }
 }
 
-async fn delete_gpg(api: &Forgejo, id: i64, force: bool) -> eyre::Result<()> {
-    let prompt =
-        "Deleting a GPG key will cause all commits signed by that key to become unverified! Continue?";
-    eyre::ensure!(
-        force || crate::prompt_bool(prompt, false).await?,
-        "User aborted process.",
-    );
+async fn delete_gpg(api: &Forgejo, id: i64, force: bool, dry_run: bool) -> eyre::Result<()> {
+    if dry_run {
+        println!("Would delete GPG key with ID {}", id);
+        println!("\nRun with --force to actually delete.");
+        return Ok(());
+    }
 
+    if !force && !crate::yes_mode() {
+        let prompt =
+            "Deleting a GPG key will cause all commits signed by that key to become unverified! Continue?";
+        if !crate::prompt_bool(prompt, false).await? {
+            println!("Aborted.");
+            return Ok(());
+        }
+    }
+
+    crate::verbose_log!("Deleting GPG key with ID {}", id);
     api.user_current_delete_gpg_key(id).await?;
     println!("Key with ID {id} deleted successfully.");
 

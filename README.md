@@ -80,6 +80,43 @@ nix profile install git+https://codeberg.org/forgejo-contrib/forgejo-cli
 
 ## Usage
 
+### Global Flags
+
+| Flag | Short | Description |
+|------|-------|-------------|
+| `--yes` | `-y` | Skip all interactive prompts (answer "yes" automatically) |
+| `--json` | | Output in JSON format for machine parsing |
+| `--verbose` | `-v` | Enable verbose output for debugging |
+| `--host` | `-H` | Specify the Forgejo instance to use |
+
+### Non-Interactive Mode
+
+For use in scripts or with AI agents, use `--yes` to bypass all confirmation prompts:
+
+```bash
+# Delete without interactive confirmation
+fj repo delete owner/repo --force --yes
+
+# Preview what would be deleted (safe)
+fj release delete v1.0.0 --dry-run
+
+# Combine flags for scripting
+fj --yes actions variables delete MY_VAR --force
+```
+
+### Destructive Operations
+
+All destructive operations (delete, remove) support:
+- `--dry-run`: Preview what would happen without making changes
+- `--force` / `-f`: Skip confirmation prompts (also bypassed by global `--yes`)
+
+```bash
+# Preview first
+fj repo delete owner/repo --dry-run
+# Then execute
+fj repo delete owner/repo --force
+```
+
 ### Instance-specific aliases
 
 While you can just use the `fj` binary directly, it can be useful to alias it

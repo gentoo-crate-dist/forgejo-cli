@@ -427,7 +427,15 @@ pub enum RepoCommand {
     /// Delete a repository
     ///
     /// This cannot be undone!
-    Delete { repo: RepoArg },
+    Delete {
+        repo: RepoArg,
+        /// Skip confirmation prompt
+        #[clap(long, short = 'f')]
+        force: bool,
+        /// Show what would be deleted without actually deleting
+        #[clap(long)]
+        dry_run: bool,
+    },
     /// Open a repository's page in your browser
     Browse {
         name: Option<RepoArg>,
@@ -563,11 +571,11 @@ impl RepoCommand {
                     .await?;
                 println!("Removed star from {}/{}", name.owner(), name.name());
             }
-            RepoCommand::Delete { repo } => {
+            RepoCommand::Delete { repo, force, dry_run } => {
                 let repo = RepoInfo::get_current(host_name, Some(&repo), None, &keys)?;
                 let api = keys.get_api(repo.host_url()).await?;
                 let name = repo.name().unwrap();
-                delete_repo(&api, name).await?;
+                delete_repo(&api, name, force, dry_run).await?;
             }
             RepoCommand::Browse { name, remote } => {
                 let repo =
@@ -1151,19 +1159,25 @@ pub fn load_ssh_keys(
     auth
 }
 
-async fn delete_repo(api: &Forgejo, name: &RepoName) -> eyre::Result<()> {
-    print!(
-        "Are you sure you want to delete {}/{}? (y/N) ",
-        name.owner(),
-        name.name()
-    );
-    let user_response = crate::readline("").await?;
-    let yes = matches!(user_response.trim(), "y" | "Y" | "yes" | "Yes");
-    if yes {
-        api.repo_delete(name.owner(), name.name()).await?;
-        println!("Deleted {}/{}", name.owner(), name.name());
-    } else {
-        println!("Did not delete");
+async fn delete_repo(api: &Forgejo, name: &RepoName, force: bool, dry_run: bool) -> eyre::Result<()> {
+    let repo_full_name = format!("{}/{}", name.owner(), name.name());
+
+    if dry_run {
+        println!("Would delete repository: {}", repo_full_name);
+        println!("\nRun with --force to actually delete.");
+        return Ok(());
     }
+
+    if !force && !crate::yes_mode() {
+        let prompt = format!("Delete repository {}? This cannot be undone!", repo_full_name);
+        if !crate::prompt_bool(&prompt, false).await? {
+            println!("Aborted.");
+            return Ok(());
+        }
+    }
+
+    crate::verbose_log!("Deleting repository: {}", repo_full_name);
+    api.repo_delete(name.owner(), name.name()).await?;
+    println!("Deleted {}", repo_full_name);
     Ok(())
 }

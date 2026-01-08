@@ -85,9 +85,16 @@ pub enum ActionsVariablesSubcommmand {
         force: bool,
     },
 
+    /// Delete a variable
     Delete {
         /// The variable to delete
         name: String,
+        /// Skip confirmation prompt
+        #[clap(long, short = 'f')]
+        force: bool,
+        /// Show what would be deleted without actually deleting
+        #[clap(long)]
+        dry_run: bool,
     },
 }
 
@@ -105,9 +112,16 @@ pub enum ActionsSecretsSubcommmand {
         data: String,
     },
 
+    /// Delete a secret
     Delete {
         /// The secret to delete
         name: String,
+        /// Skip confirmation prompt
+        #[clap(long, short = 'f')]
+        force: bool,
+        /// Show what would be deleted without actually deleting
+        #[clap(long)]
+        dry_run: bool,
     },
 }
 
@@ -130,8 +144,8 @@ impl ActionsCommand {
                 ActionsVariablesSubcommmand::Create { name, data, force } => {
                     create_variable(repo, &api, name, data, force).await?
                 }
-                ActionsVariablesSubcommmand::Delete { name } => {
-                    delete_variable(repo, &api, name).await?
+                ActionsVariablesSubcommmand::Delete { name, force, dry_run } => {
+                    delete_variable(repo, &api, name, force, dry_run).await?
                 }
             },
 
@@ -140,8 +154,8 @@ impl ActionsCommand {
                 ActionsSecretsSubcommmand::Create { name, data } => {
                     create_secret(repo, &api, name, data).await?
                 }
-                ActionsSecretsSubcommmand::Delete { name } => {
-                    delete_secret(repo, &api, name).await?
+                ActionsSecretsSubcommmand::Delete { name, force, dry_run } => {
+                    delete_secret(repo, &api, name, force, dry_run).await?
                 }
             },
 
@@ -298,7 +312,28 @@ async fn create_variable(
     Ok(())
 }
 
-async fn delete_variable(repo: &RepoName, api: &Forgejo, name: String) -> eyre::Result<()> {
+async fn delete_variable(
+    repo: &RepoName,
+    api: &Forgejo,
+    name: String,
+    force: bool,
+    dry_run: bool,
+) -> eyre::Result<()> {
+    if dry_run {
+        println!("Would delete variable: {}", name);
+        println!("\nRun with --force to actually delete.");
+        return Ok(());
+    }
+
+    if !force && !crate::yes_mode() {
+        let prompt = format!("Delete variable `{}`?", name);
+        if !crate::prompt_bool(&prompt, false).await? {
+            println!("Aborted.");
+            return Ok(());
+        }
+    }
+
+    crate::verbose_log!("Deleting variable: {}", name);
     api.delete_repo_variable(repo.owner(), repo.name(), &name)
         .await?;
     println!("Variable {name} deleted.");
@@ -340,9 +375,31 @@ async fn create_secret(
     Ok(())
 }
 
-async fn delete_secret(repo: &RepoName, api: &Forgejo, name: String) -> eyre::Result<()> {
+async fn delete_secret(
+    repo: &RepoName,
+    api: &Forgejo,
+    name: String,
+    force: bool,
+    dry_run: bool,
+) -> eyre::Result<()> {
+    if dry_run {
+        println!("Would delete secret: {}", name);
+        println!("\nRun with --force to actually delete.");
+        return Ok(());
+    }
+
+    if !force && !crate::yes_mode() {
+        let prompt = format!("Delete secret `{}`? This cannot be undone.", name);
+        if !crate::prompt_bool(&prompt, false).await? {
+            println!("Aborted.");
+            return Ok(());
+        }
+    }
+
+    crate::verbose_log!("Deleting secret: {}", name);
     api.delete_repo_secret(repo.owner(), repo.name(), &name)
         .await?;
+    println!("Secret {name} deleted.");
 
     Ok(())
 }

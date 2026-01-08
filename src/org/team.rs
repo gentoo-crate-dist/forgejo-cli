@@ -61,6 +61,12 @@ pub enum TeamSubcommand {
         org: String,
         /// The name of the team to delete
         name: String,
+        /// Skip confirmation prompt
+        #[clap(long, short = 'f')]
+        force: bool,
+        /// Show what would be deleted without actually deleting
+        #[clap(long)]
+        dry_run: bool,
     },
     #[clap(subcommand)]
     Repo(TeamRepoSubcommand),
@@ -157,7 +163,9 @@ impl TeamSubcommand {
                 flags,
                 options,
             } => edit_team(&api, org, name, new_name, flags, options).await?,
-            TeamSubcommand::Delete { org, name } => delete_team(&api, org, name).await?,
+            TeamSubcommand::Delete { org, name, force, dry_run } => {
+                delete_team(&api, org, name, force, dry_run).await?
+            }
             TeamSubcommand::Repo(subcommand) => subcommand.run(&api).await?,
             TeamSubcommand::Member(subcommand) => subcommand.run(&api).await?,
         }
@@ -420,20 +428,36 @@ async fn edit_team(
     Ok(())
 }
 
-async fn delete_team(api: &Forgejo, org: String, name: String) -> eyre::Result<()> {
-    let SpecialRender { bold, reset, .. } = crate::special_render();
-    println!("Are you sure you want to delete {bold}{org}/{name}{reset}?");
-    let confirmation = crate::readline("(y/N) ").await?.to_lowercase();
-    if matches!(confirmation.trim(), "y" | "yes") {
-        let id = find_team_by_name(api, &org, &name)
-            .await?
-            .id
-            .ok_or_eyre("team does not have id")?;
-        api.org_delete_team(id).await?;
-        println!("Team deleted.");
-    } else {
-        println!("Team not deleted.");
+async fn delete_team(
+    api: &Forgejo,
+    org: String,
+    name: String,
+    force: bool,
+    dry_run: bool,
+) -> eyre::Result<()> {
+    let team_full_name = format!("{}/{}", org, name);
+
+    if dry_run {
+        println!("Would delete team: {}", team_full_name);
+        println!("\nRun with --force to actually delete.");
+        return Ok(());
     }
+
+    if !force && !crate::yes_mode() {
+        let prompt = format!("Delete team {}?", team_full_name);
+        if !crate::prompt_bool(&prompt, false).await? {
+            println!("Aborted.");
+            return Ok(());
+        }
+    }
+
+    crate::verbose_log!("Deleting team: {}", team_full_name);
+    let id = find_team_by_name(api, &org, &name)
+        .await?
+        .id
+        .ok_or_eyre("team does not have id")?;
+    api.org_delete_team(id).await?;
+    println!("Deleted team {}", team_full_name);
     Ok(())
 }
 
@@ -468,6 +492,12 @@ pub enum TeamRepoSubcommand {
         team: String,
         /// The name of the repo to remove from the team.
         repo: String,
+        /// Skip confirmation prompt
+        #[clap(long, short = 'f')]
+        force: bool,
+        /// Show what would be done without actually doing it
+        #[clap(long)]
+        dry_run: bool,
     },
 }
 
@@ -480,8 +510,8 @@ impl TeamRepoSubcommand {
             TeamRepoSubcommand::Add { org, team, repo } => {
                 add_repo_to_team(&api, org, team, repo).await?
             }
-            TeamRepoSubcommand::Rm { org, team, repo } => {
-                remove_repo_from_team(&api, org, team, repo).await?
+            TeamRepoSubcommand::Rm { org, team, repo, force, dry_run } => {
+                remove_repo_from_team(&api, org, team, repo, force, dry_run).await?
             }
         }
         Ok(())
@@ -538,7 +568,24 @@ async fn remove_repo_from_team(
     org: String,
     team: String,
     repo: String,
+    force: bool,
+    dry_run: bool,
 ) -> eyre::Result<()> {
+    if dry_run {
+        println!("Would remove repo {}/{} from team {}", org, repo, team);
+        println!("\nRun with --force to actually remove.");
+        return Ok(());
+    }
+
+    if !force && !crate::yes_mode() {
+        let prompt = format!("Remove repo {}/{} from team {}?", org, repo, team);
+        if !crate::prompt_bool(&prompt, false).await? {
+            println!("Aborted.");
+            return Ok(());
+        }
+    }
+
+    crate::verbose_log!("Removing repo {}/{} from team {}", org, repo, team);
     let id = find_team_by_name(api, &org, &team)
         .await?
         .id
@@ -583,6 +630,12 @@ pub enum TeamMemberSubcommand {
         team: String,
         /// The name of the user to remove from the team.
         user: String,
+        /// Skip confirmation prompt
+        #[clap(long, short = 'f')]
+        force: bool,
+        /// Show what would be done without actually doing it
+        #[clap(long)]
+        dry_run: bool,
     },
 }
 
@@ -595,8 +648,8 @@ impl TeamMemberSubcommand {
             TeamMemberSubcommand::Add { org, team, user } => {
                 add_user_to_team(&api, org, team, user).await?
             }
-            TeamMemberSubcommand::Rm { org, team, user } => {
-                remove_user_from_team(&api, org, team, user).await?
+            TeamMemberSubcommand::Rm { org, team, user, force, dry_run } => {
+                remove_user_from_team(&api, org, team, user, force, dry_run).await?
             }
         }
         Ok(())
@@ -674,7 +727,24 @@ async fn remove_user_from_team(
     org: String,
     team: String,
     user: String,
+    force: bool,
+    dry_run: bool,
 ) -> eyre::Result<()> {
+    if dry_run {
+        println!("Would remove user {} from team {}", user, team);
+        println!("\nRun with --force to actually remove.");
+        return Ok(());
+    }
+
+    if !force && !crate::yes_mode() {
+        let prompt = format!("Remove user {} from team {}?", user, team);
+        if !crate::prompt_bool(&prompt, false).await? {
+            println!("Aborted.");
+            return Ok(());
+        }
+    }
+
+    crate::verbose_log!("Removing user {} from team {}", user, team);
     let id = find_team_by_name(api, &org, &team)
         .await?
         .id

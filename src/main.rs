@@ -37,6 +37,15 @@ pub struct App {
     host: Option<String>,
     #[clap(long)]
     style: Option<Style>,
+    /// Skip all interactive prompts, answering "yes" automatically
+    #[clap(long, short = 'y', global = true)]
+    yes: bool,
+    /// Output in JSON format for machine parsing
+    #[clap(long, global = true)]
+    json: bool,
+    /// Enable verbose output for debugging
+    #[clap(long, short = 'v', global = true)]
+    verbose: bool,
     #[clap(subcommand)]
     command: Command,
 }
@@ -85,6 +94,11 @@ async fn main() -> eyre::Result<()> {
     let args = App::parse();
 
     let _ = SPECIAL_RENDER.set(SpecialRender::new(args.style.unwrap_or_default()));
+    let _ = YES_MODE.set(args.yes);
+    let _ = JSON_OUTPUT.set(args.json);
+    let _ = VERBOSE_MODE.set(args.verbose);
+
+    verbose_log!("forgejo-cli starting with host={:?}", args.host);
 
     let mut keys = KeyInfo::load().await?;
     let r = args.command.run(&mut keys, args.host.as_deref()).await;
@@ -107,6 +121,12 @@ async fn readline(msg: &str) -> eyre::Result<String> {
 }
 
 async fn prompt_bool(msg: &str, default_answer: bool) -> eyre::Result<bool> {
+    // In non-interactive mode, return true (answer "yes" to all prompts)
+    if yes_mode() {
+        verbose_log!("Prompt skipped (--yes): {}", msg);
+        return Ok(true);
+    }
+
     let msg = if default_answer {
         format!("{msg} [Y/n]: ")
     } else {
@@ -131,6 +151,19 @@ async fn prompt_bool(msg: &str, default_answer: bool) -> eyre::Result<bool> {
 }
 
 async fn editor(contents: &mut String, ext: Option<&str>) -> eyre::Result<()> {
+    // In non-interactive mode, fail if content is empty instead of spawning editor
+    if yes_mode() {
+        if contents.trim().is_empty() {
+            eyre::bail!(
+                "No content provided and --yes flag prevents interactive editor.\n\
+                \n\
+                Provide content using --body or --body-file flags."
+            );
+        }
+        // Content already provided, no need to edit
+        return Ok(());
+    }
+
     let editor = std::path::PathBuf::from(
         std::env::var_os("EDITOR").ok_or_else(|| eyre!("unable to locate editor"))?,
     );
@@ -230,11 +263,60 @@ fn repo_url_host_name(url: &url::Url) -> &str {
 
 use std::sync::OnceLock;
 static SPECIAL_RENDER: OnceLock<SpecialRender> = OnceLock::new();
+static YES_MODE: OnceLock<bool> = OnceLock::new();
+static JSON_OUTPUT: OnceLock<bool> = OnceLock::new();
+static VERBOSE_MODE: OnceLock<bool> = OnceLock::new();
 
 fn special_render() -> &'static SpecialRender {
     SPECIAL_RENDER
         .get()
         .expect("attempted to get special characters before that was initialized")
+}
+
+/// Returns true if --yes flag was passed (skip interactive prompts)
+pub fn yes_mode() -> bool {
+    *YES_MODE.get().unwrap_or(&false)
+}
+
+/// Returns true if --json flag was passed (machine-readable output)
+pub fn json_output() -> bool {
+    *JSON_OUTPUT.get().unwrap_or(&false)
+}
+
+/// Returns true if --verbose flag was passed (debug output)
+pub fn verbose() -> bool {
+    *VERBOSE_MODE.get().unwrap_or(&false)
+}
+
+/// Print verbose/debug information to stderr
+#[macro_export]
+macro_rules! verbose_log {
+    ($($arg:tt)*) => {
+        if $crate::verbose() {
+            eprintln!("[verbose] {}", format!($($arg)*));
+        }
+    };
+}
+
+/// Output a value as JSON if --json flag is set, otherwise use the provided text formatter
+pub fn output<T: serde::Serialize>(value: &T, text_fn: impl FnOnce(&T)) {
+    if json_output() {
+        println!("{}", serde_json::to_string_pretty(value).unwrap());
+    } else {
+        text_fn(value);
+    }
+}
+
+/// Print next-step hints (skipped in JSON mode)
+pub fn print_next_steps(hints: &[(&str, &str)]) {
+    if json_output() {
+        return;
+    }
+    let SpecialRender { dark_grey, reset, .. } = *special_render();
+    println!("\n{dark_grey}Next steps:{reset}");
+    for (cmd, desc) in hints {
+        println!("  {:<35} {dark_grey}{}{reset}", cmd, desc);
+    }
 }
 
 #[derive(clap::ValueEnum, Clone, Copy, Debug, Default)]

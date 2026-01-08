@@ -2,3 +2,7 @@
 
 # Nix output
 /result*
+
+# all the code assistants...
+.claude/
+.mcp.json

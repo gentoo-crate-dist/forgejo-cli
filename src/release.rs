@@ -83,6 +83,12 @@ pub enum ReleaseSubcommand {
         name: String,
         #[clap(long, short = 't')]
         by_tag: bool,
+        /// Skip confirmation prompt
+        #[clap(long, short = 'f')]
+        force: bool,
+        /// Show what would be deleted without actually deleting
+        #[clap(long)]
+        dry_run: bool,
     },
     /// List all the releases on a repo
     List {
@@ -113,7 +119,16 @@ pub enum AssetCommand {
         name: Option<String>,
     },
     /// Remove an attachment from a release
-    Delete { release: String, asset: String },
+    Delete {
+        release: String,
+        asset: String,
+        /// Skip confirmation prompt
+        #[clap(long, short = 'f')]
+        force: bool,
+        /// Show what would be deleted without actually deleting
+        #[clap(long)]
+        dry_run: bool,
+    },
     /// Download an attached file
     ///
     /// Use `source.zip` or `source.tar.gz` to download the repo archive
@@ -161,8 +176,8 @@ impl ReleaseCommand {
                 draft,
                 prerelease,
             } => edit_release(repo, &api, name, rename, tag, body, draft, prerelease).await?,
-            ReleaseSubcommand::Delete { name, by_tag } => {
-                delete_release(repo, &api, name, by_tag).await?
+            ReleaseSubcommand::Delete { name, by_tag, force, dry_run } => {
+                delete_release(repo, &api, name, by_tag, force, dry_run).await?
             }
             ReleaseSubcommand::List {
                 include_prerelease,
@@ -178,8 +193,8 @@ impl ReleaseCommand {
                     path,
                     name,
                 } => create_asset(repo, &api, release, path, name).await?,
-                AssetCommand::Delete { release, asset } => {
-                    delete_asset(repo, &api, release, asset).await?
+                AssetCommand::Delete { release, asset, force, dry_run } => {
+                    delete_asset(repo, &api, release, asset, force, dry_run).await?
                 }
                 AssetCommand::Download {
                     release,
@@ -490,7 +505,23 @@ async fn delete_asset(
     api: &Forgejo,
     release_name: String,
     asset_name: String,
+    force: bool,
+    dry_run: bool,
 ) -> eyre::Result<()> {
+    if dry_run {
+        println!("Would delete asset `{}` from release {}", asset_name, release_name);
+        println!("\nRun with --force to actually delete.");
+        return Ok(());
+    }
+
+    if !force && !crate::yes_mode() {
+        let prompt = format!("Delete asset `{}` from release {}?", asset_name, release_name);
+        if !crate::prompt_bool(&prompt, false).await? {
+            println!("Aborted.");
+            return Ok(());
+        }
+    }
+
     let release = find_release(repo, api, &release_name).await?;
     let assets = release
         .assets
@@ -506,6 +537,8 @@ async fn delete_asset(
     let asset_id = asset
         .id
         .ok_or_else(|| eyre::eyre!("asset does not have id"))?;
+
+    crate::verbose_log!("Deleting asset {} from release {}", asset_name, release_name);
     api.repo_delete_release_attachment(repo.owner(), repo.name(), release_id, asset_id)
         .await?;
     println!("Removed attachment `{}` from {}", asset_name, release_name);
@@ -605,7 +638,26 @@ async fn delete_release(
     api: &Forgejo,
     name: String,
     by_tag: bool,
+    force: bool,
+    dry_run: bool,
 ) -> eyre::Result<()> {
+    let identifier = if by_tag { "tag" } else { "release" };
+
+    if dry_run {
+        println!("Would delete {} `{}`", identifier, name);
+        println!("\nRun with --force to actually delete.");
+        return Ok(());
+    }
+
+    if !force && !crate::yes_mode() {
+        let prompt = format!("Delete {} `{}`?", identifier, name);
+        if !crate::prompt_bool(&prompt, false).await? {
+            println!("Aborted.");
+            return Ok(());
+        }
+    }
+
+    crate::verbose_log!("Deleting {} {}", identifier, name);
     if by_tag {
         api.repo_delete_release_by_tag(repo.owner(), repo.name(), &name)
             .await?;
@@ -617,5 +669,6 @@ async fn delete_release(
         api.repo_delete_release(repo.owner(), repo.name(), id)
             .await?;
     }
+    println!("Deleted {} `{}`", identifier, name);
     Ok(())
 }
