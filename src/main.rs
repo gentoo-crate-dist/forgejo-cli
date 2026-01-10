@@ -12,8 +12,10 @@ use keys::*;
 mod actions;
 mod auth;
 mod completion;
+mod config;
 mod issues;
 mod org;
+mod projects;
 mod prs;
 mod release;
 mod repo;
@@ -48,6 +50,8 @@ pub enum Command {
     Repo(repo::RepoCommand),
     Issue(issues::IssueCommand),
     Pr(prs::PrCommand),
+    Project(projects::ProjectCommand),
+    Config(config::ConfigCommand),
     Wiki(wiki::WikiCommand),
     Actions(actions::ActionsCommand),
     #[command(name = "whoami")]
@@ -68,6 +72,8 @@ impl Command {
             Command::Repo(subcommand) => subcommand.run(keys, host_name).await?,
             Command::Issue(subcommand) => subcommand.run(keys, host_name).await?,
             Command::Pr(subcommand) => subcommand.run(keys, host_name).await?,
+            Command::Project(subcommand) => subcommand.run(keys, host_name).await?,
+            Command::Config(subcommand) => subcommand.run().await?,
             Command::Wiki(subcommand) => subcommand.run(keys, host_name).await?,
             Command::Actions(subcommand) => subcommand.run(keys, host_name).await?,
             Command::WhoAmI(command) => command.run(keys, host_name).await?,

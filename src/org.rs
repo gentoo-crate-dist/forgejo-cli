@@ -186,7 +186,7 @@ fn is_valid_name_char(c: char) -> bool {
 
 async fn list_orgs(api: &Forgejo, page: u32, only_member_of: bool) -> eyre::Result<()> {
     let (total, orgs) = if only_member_of {
-        let orgs = api.org_list_current_user_orgs().await?;
+        let orgs = api.org_list_current_user_orgs().page(page).await?;
         (None, orgs)
     } else {
         let (headers, orgs) = api.org_get_all().page(page).await?;
