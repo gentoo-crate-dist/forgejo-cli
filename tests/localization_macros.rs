@@ -1,6 +1,6 @@
 use forgejo_cli::localization::bundles;
 
-use forgejo_cli::{ftl_format, ftl_write, ftl_println, ftl_eprintln};
+use forgejo_cli::{ftl_eprintln, ftl_format, ftl_println, ftl_write};
 
 #[test]
 fn localization_macros() {
