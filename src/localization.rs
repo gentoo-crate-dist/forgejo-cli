@@ -1,4 +1,4 @@
-mod bundles {
+pub mod bundles {
     use fluent_bundle::{concurrent::FluentBundle, FluentResource};
     use std::sync::LazyLock;
     use std::sync::OnceLock;
@@ -185,27 +185,4 @@ macro_rules! ftl_eprintln {
             writeln!(&mut stderr).expect("failed to write newline");
         }
     }
-}
-
-#[test]
-fn localization_macros() {
-    let _ = bundles::LOCALE.set(bundles::init_to("en-US"));
-
-    let s = ftl_format!("test-hello");
-    assert_eq!(s, "Hello");
-
-    let mut s = String::new();
-    ftl_write!(&mut s, "test-hello");
-    assert_eq!(s, "Hello");
-
-    ftl_println!("test-hello");
-    ftl_eprintln!("test-hello");
-}
-
-#[test]
-fn localization_fallback() {
-    let _ = bundles::LOCALE.set(bundles::init_to("tok"));
-
-    let s = ftl_format!("test-fallback-only-english");
-    assert_eq!(s, "This message is only in english");
 }
