@@ -49,6 +49,7 @@ pub enum Command {
     #[clap(subcommand)]
     Repo(repo::RepoCommand),
     Issue(issues::IssueCommand),
+    #[clap(id = ftl_format!("arg_subcmd_pr").into_owned(), visible_alias = "pr")]
     Pr(prs::PrCommand),
     Wiki(wiki::WikiCommand),
     Actions(actions::ActionsCommand),
