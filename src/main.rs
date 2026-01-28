@@ -846,6 +846,95 @@ impl<T: Display, F: Display> Display for DisplayOptional<T, F> {
     }
 }
 
+// Label rendering utilities (shared across prs, issues, org, repo)
+
+pub fn render_label_list(labels: &[forgejo_api::structs::Label]) -> eyre::Result<()> {
+    let SpecialRender { fancy, .. } = *special_render();
+    if fancy {
+        let mut total_width = 0;
+        for label in labels {
+            let name = label.name.as_deref().unwrap_or("???").trim();
+            if total_width + name.len() > 40 {
+                println!();
+                total_width = 0;
+            }
+            print!("{} ", render_label(label)?);
+            total_width += name.len();
+        }
+        println!();
+    } else {
+        for label in labels {
+            let name = label.name.as_deref().unwrap_or("???");
+            println!("{name}");
+        }
+    }
+    Ok(())
+}
+
+pub fn render_label(label: &forgejo_api::structs::Label) -> eyre::Result<String> {
+    use std::fmt::Write;
+    let mut s = String::new();
+    let SpecialRender {
+        black,
+        white,
+        reset,
+        ..
+    } = *special_render();
+    let name = label.name.as_deref().unwrap_or("???").trim();
+    let color_s = label.color.as_deref().unwrap_or("FFFFFF");
+    let (r, g, b) = parse_color(color_s)?;
+    let text_color = if luma(r, g, b) > 0.5 { black } else { white };
+    let rgb_bg = format!("\x1b[48;2;{r};{g};{b}m");
+    if label.exclusive.unwrap_or_default() {
+        let (r2, g2, b2) = darken(r, g, b);
+        let (category, name) = name
+            .split_once("/")
+            .unwrap_or(("", name));
+        let rgb_bg_dark = format!("\x1b[48;2;{r2};{g2};{b2}m");
+        write!(
+            &mut s,
+            "{rgb_bg_dark}{text_color} {category} {rgb_bg} {name} {reset}"
+        )?;
+    } else {
+        write!(&mut s, "{rgb_bg}{text_color} {name} {reset}")?;
+    }
+    Ok(s)
+}
+
+fn parse_color(color: &str) -> eyre::Result<(u8, u8, u8)> {
+    let color = color.strip_prefix('#').unwrap_or(color);
+    eyre::ensure!(color.len() == 6, "color string wrong length");
+    let mut iter = color.chars();
+    let mut next_digit = || {
+        iter.next()
+            .unwrap()
+            .to_digit(16)
+            .ok_or_else(|| eyre::eyre!("invalid hex digit"))
+    };
+    let r1 = next_digit()?;
+    let r2 = next_digit()?;
+    let g1 = next_digit()?;
+    let g2 = next_digit()?;
+    let b1 = next_digit()?;
+    let b2 = next_digit()?;
+    let r = ((r1 << 4) | (r2)) as u8;
+    let g = ((g1 << 4) | (g2)) as u8;
+    let b = ((b1 << 4) | (b2)) as u8;
+    Ok((r, g, b))
+}
+
+fn luma(r: u8, g: u8, b: u8) -> f32 {
+    ((0.299 * (r as f32)) + (0.578 * (g as f32)) + (0.114 * (b as f32))) / 255.0
+}
+
+fn darken(r: u8, g: u8, b: u8) -> (u8, u8, u8) {
+    (
+        ((r as f32) * 0.85) as u8,
+        ((g as f32) * 0.85) as u8,
+        ((b as f32) * 0.85) as u8,
+    )
+}
+
 /// When formatted, show the boolean with coloring.
 struct DisplayBool(bool);
 

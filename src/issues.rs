@@ -5,9 +5,12 @@ use std::str::FromStr;
 use clap::{Args, Subcommand};
 use eyre::{eyre, Context, OptionExt};
 use forgejo_api::structs::{
-    Comment, CreateIssueCommentOption, CreateIssueOption, EditIssueOption, IssueGetCommentsQuery,
+    Comment, CreateIssueCommentOption, CreateIssueOption, DeleteLabelsOption, EditIssueOption,
+    IssueGetCommentsQuery, IssueLabelsOption, IssueListLabelsQuery, OrgListLabelsQuery,
 };
 use forgejo_api::Forgejo;
+
+use crate::SpecialRender;
 
 use crate::repo::{RepoArg, RepoInfo, RepoName};
 
@@ -187,6 +190,15 @@ pub enum EditCommand {
         idx: usize,
         new_body: Option<String>,
     },
+    /// Add or remove labels from an issue
+    Labels {
+        /// Labels to add to the issue
+        #[clap(long, short)]
+        add: Vec<String>,
+        /// Labels to remove from the issue
+        #[clap(long, short)]
+        rm: Vec<String>,
+    },
 }
 
 #[derive(Subcommand, Clone, Debug)]
@@ -197,6 +209,8 @@ pub enum ViewCommand {
     Comment { idx: usize },
     /// List every comment
     Comments,
+    /// View labels assigned to an issue
+    Labels,
 }
 
 impl IssueCommand {
@@ -231,6 +245,7 @@ impl IssueCommand {
                 ViewCommand::Body => view_issue(repo, &api, id.number).await?,
                 ViewCommand::Comment { idx } => view_comment(repo, &api, id.number, idx).await?,
                 ViewCommand::Comments => view_comments(repo, &api, id.number).await?,
+                ViewCommand::Labels => view_issue_labels(repo, &api, id.number).await?,
             },
             Search {
                 repo: _,
@@ -250,6 +265,9 @@ impl IssueCommand {
                 }
                 EditCommand::Comment { idx, new_body } => {
                     edit_comment(repo, &api, issue.number, idx, new_body).await?
+                }
+                EditCommand::Labels { add, rm } => {
+                    edit_issue_labels(repo, &api, issue.number, add, rm).await?
                 }
             },
             Close { issue, with_msg } => close_issue(repo, &api, issue.number, with_msg).await?,
@@ -505,6 +523,19 @@ pub async fn view_issue(repo: &RepoName, api: &Forgejo, id: i64) -> eyre::Result
         println!("1 comment");
     } else {
         println!("{comments} comments");
+    }
+
+    let labels = issue.labels.as_deref().unwrap_or_default();
+    if !labels.is_empty() {
+        println!();
+        print!("labels: ");
+        for (i, label) in labels.iter().enumerate() {
+            if i > 0 {
+                print!(" ");
+            }
+            print!("{}", crate::render_label(label)?);
+        }
+        println!();
     }
     Ok(())
 }
@@ -915,6 +946,90 @@ pub async fn close_issue(
         .ok_or_eyre("issue does not have title")?;
 
     println!("Closed issue {issue}: \"{issue_title}\"");
+
+    Ok(())
+}
+
+async fn view_issue_labels(repo: &RepoName, api: &Forgejo, issue: i64) -> eyre::Result<()> {
+    let issue_data = api
+        .issue_get_issue(repo.owner(), repo.name(), issue)
+        .await?;
+    let labels = issue_data.labels.as_deref().unwrap_or_default();
+    crate::render_label_list(labels)?;
+    Ok(())
+}
+
+async fn edit_issue_labels(
+    repo: &RepoName,
+    api: &Forgejo,
+    issue: i64,
+    add: Vec<String>,
+    rm: Vec<String>,
+) -> eyre::Result<()> {
+    // Get all available labels (repo + org)
+    let (_, mut labels) = api
+        .issue_list_labels(repo.owner(), repo.name(), IssueListLabelsQuery::default())
+        .await?;
+    let org_labels = api
+        .org_list_labels(repo.owner(), OrgListLabelsQuery::default())
+        .all()
+        .await
+        .unwrap_or_default();
+    labels.extend(org_labels);
+
+    let mut unknown_labels = Vec::new();
+
+    // Find IDs for labels to add
+    let mut add_ids = Vec::with_capacity(add.len());
+    for label_name in &add {
+        let maybe_label = labels
+            .iter()
+            .find(|label| label.name.as_ref() == Some(label_name));
+        if let Some(label) = maybe_label {
+            add_ids.push(serde_json::Value::Number(
+                label.id.ok_or_eyre("label does not have id")?.into(),
+            ));
+        } else {
+            unknown_labels.push(label_name);
+        }
+    }
+
+    // Add labels
+    if !add_ids.is_empty() {
+        let opts = IssueLabelsOption {
+            labels: Some(add_ids),
+            updated_at: None,
+        };
+        api.issue_add_label(repo.owner(), repo.name(), issue, opts)
+            .await?;
+    }
+
+    // Remove labels by ID
+    let opts = DeleteLabelsOption { updated_at: None };
+    for label_name in &rm {
+        let maybe_label = labels
+            .iter()
+            .find(|label| label.name.as_ref() == Some(label_name));
+        if let Some(label) = maybe_label {
+            let id = label.id.ok_or_eyre("label does not have id")?;
+            api.issue_remove_label(repo.owner(), repo.name(), issue, &id.to_string(), opts.clone())
+                .await?;
+        } else {
+            unknown_labels.push(label_name);
+        }
+    }
+
+    if !unknown_labels.is_empty() {
+        if unknown_labels.len() == 1 {
+            println!("'{}' doesn't exist", &unknown_labels[0]);
+        } else {
+            let SpecialRender { bullet, .. } = *crate::special_render();
+            println!("The following labels don't exist:");
+            for unknown_label in unknown_labels {
+                println!("{bullet} {unknown_label}");
+            }
+        }
+    }
 
     Ok(())
 }

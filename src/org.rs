@@ -565,7 +565,7 @@ async fn list_org_labels(api: &Forgejo, org: String) -> eyre::Result<()> {
         .org_list_labels(&org, OrgListLabelsQuery::default())
         .all()
         .await?;
-    crate::prs::render_label_list(&labels)?;
+    crate::render_label_list(&labels)?;
     Ok(())
 }
 
@@ -609,7 +609,7 @@ async fn add_org_label(
         name,
     };
     let label = api.org_create_label(&org, opt).await?;
-    println!("Created new label {}", crate::prs::render_label(&label)?);
+    println!("Created new label {}", crate::render_label(&label)?);
     Ok(())
 }
 
@@ -643,8 +643,8 @@ async fn edit_org_label(
     let label = api.org_edit_label(&org, id, opt).await?;
     println!(
         "Changed label {} to {}",
-        crate::prs::render_label(&old_label)?,
-        crate::prs::render_label(&label)?
+        crate::render_label(&old_label)?,
+        crate::render_label(&label)?
     );
     Ok(())
 }
@@ -655,7 +655,7 @@ async fn remove_org_label(api: &Forgejo, org: String, name: String) -> eyre::Res
         .ok_or_eyre("label not found")?;
     let id = label.id.ok_or_eyre("label does not have id")?;
     api.org_delete_label(&org, id).await?;
-    println!("Removed label {}", crate::prs::render_label(&label)?);
+    println!("Removed label {}", crate::render_label(&label)?);
     Ok(())
 }
 

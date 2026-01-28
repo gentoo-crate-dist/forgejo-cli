@@ -2,7 +2,10 @@ use std::{io::Write, path::PathBuf, str::FromStr};
 
 use clap::{Args, Subcommand};
 use eyre::{eyre, Context, OptionExt, Result};
-use forgejo_api::{structs::CreateRepoOption, Forgejo};
+use forgejo_api::{
+    structs::{CreateLabelOption, CreateRepoOption, EditLabelOption, IssueListLabelsQuery},
+    Forgejo,
+};
 use ssh2_config::ParseRule;
 use url::Url;
 
@@ -444,6 +447,63 @@ pub enum RepoCommand {
         #[clap(long, short = 'R')]
         remote: Option<String>,
     },
+    /// Manage repository labels
+    Label {
+        #[clap(subcommand)]
+        command: LabelSubcommand,
+        /// The repository to manage labels for (owner/repo format)
+        #[clap(long, short)]
+        repo: Option<RepoArg>,
+        /// The name of the remote to use
+        #[clap(long, short = 'R')]
+        remote: Option<String>,
+    },
+}
+
+#[derive(Subcommand, Clone, Debug)]
+pub enum LabelSubcommand {
+    /// List all labels in a repository
+    List,
+    /// Add a new label to a repository
+    Add {
+        /// The name of the label to add
+        name: String,
+        /// The hex color code for the label (e.g., "ff0000" or "#ff0000")
+        #[clap(long, short)]
+        color: String,
+        /// A description of what the label is for
+        #[clap(long, short)]
+        description: Option<String>,
+        /// If this label is named `{scope}/{name}`, make it exclusive with other labels with the
+        /// same scope
+        #[clap(long, short)]
+        exclusive: bool,
+    },
+    /// Edit an existing label in a repository
+    Edit {
+        /// The name of the label to edit
+        name: String,
+        /// Set a new name for the label
+        #[clap(long, short = 'N')]
+        new_name: Option<String>,
+        /// Set a new hex color code for the label
+        #[clap(long, short)]
+        color: Option<String>,
+        /// Set a description of what the label is for
+        #[clap(long, short)]
+        description: Option<String>,
+        /// Set whether this label is exclusive with others of the same scope
+        #[clap(long, short)]
+        exclusive: bool,
+        /// Set whether this label is archived
+        #[clap(long, short)]
+        archived: Option<bool>,
+    },
+    /// Remove a label from a repository
+    Rm {
+        /// The name of the label to remove
+        name: String,
+    },
 }
 
 impl RepoCommand {
@@ -591,6 +651,19 @@ impl RepoCommand {
                     .extend([repo.owner(), repo.name()]);
 
                 open::that_detached(url.as_str()).wrap_err("Failed to open URL")?;
+            }
+            RepoCommand::Label {
+                command,
+                repo,
+                remote,
+            } => {
+                let repo_info =
+                    RepoInfo::get_current(host_name, repo.as_ref(), remote.as_deref(), &keys)?;
+                let api = keys.get_api(repo_info.host_url()).await?;
+                let repo = repo_info
+                    .name()
+                    .ok_or_eyre("couldn't get repo name, please specify")?;
+                command.run(&api, repo).await?;
             }
         };
         Ok(())
@@ -1175,5 +1248,130 @@ async fn delete_repo(api: &Forgejo, name: &RepoName) -> eyre::Result<()> {
     } else {
         println!("Did not delete");
     }
+    Ok(())
+}
+
+// Label subcommand implementation
+
+impl LabelSubcommand {
+    async fn run(self, api: &Forgejo, repo: &RepoName) -> eyre::Result<()> {
+        match self {
+            LabelSubcommand::List => list_repo_labels(api, repo).await?,
+            LabelSubcommand::Add {
+                name,
+                color,
+                description,
+                exclusive,
+            } => add_repo_label(api, repo, name, color, description, exclusive).await?,
+            LabelSubcommand::Edit {
+                name,
+                new_name,
+                color,
+                description,
+                exclusive,
+                archived,
+            } => {
+                edit_repo_label(api, repo, name, new_name, color, description, exclusive, archived)
+                    .await?
+            }
+            LabelSubcommand::Rm { name } => remove_repo_label(api, repo, name).await?,
+        }
+        Ok(())
+    }
+}
+
+async fn list_repo_labels(api: &Forgejo, repo: &RepoName) -> eyre::Result<()> {
+    let (_, labels) = api
+        .issue_list_labels(repo.owner(), repo.name(), IssueListLabelsQuery::default())
+        .await?;
+    crate::render_label_list(&labels)?;
+    Ok(())
+}
+
+async fn find_repo_label_by_name(
+    api: &Forgejo,
+    repo: &RepoName,
+    name: &str,
+) -> eyre::Result<Option<forgejo_api::structs::Label>> {
+    let (_, labels) = api
+        .issue_list_labels(repo.owner(), repo.name(), IssueListLabelsQuery::default())
+        .await?;
+    Ok(labels
+        .into_iter()
+        .find(|label| label.name.as_deref().is_some_and(|label_name| label_name == name)))
+}
+
+async fn add_repo_label(
+    api: &Forgejo,
+    repo: &RepoName,
+    name: String,
+    color: String,
+    description: Option<String>,
+    exclusive: bool,
+) -> eyre::Result<()> {
+    let color = color
+        .strip_prefix('#')
+        .map(|s| s.to_owned())
+        .unwrap_or(color);
+    let opt = CreateLabelOption {
+        color,
+        description,
+        exclusive: Some(exclusive),
+        is_archived: Some(false),
+        name,
+    };
+    let label = api
+        .issue_create_label(repo.owner(), repo.name(), opt)
+        .await?;
+    println!("Created new label {}", crate::render_label(&label)?);
+    Ok(())
+}
+
+async fn edit_repo_label(
+    api: &Forgejo,
+    repo: &RepoName,
+    name: String,
+    new_name: Option<String>,
+    color: Option<String>,
+    description: Option<String>,
+    exclusive: bool,
+    archived: Option<bool>,
+) -> eyre::Result<()> {
+    let old_label = find_repo_label_by_name(api, repo, &name)
+        .await?
+        .ok_or_eyre("label not found")?;
+    let id = old_label.id.ok_or_eyre("label does not have id")?;
+    let color = color.map(|color| {
+        color
+            .strip_prefix('#')
+            .map(|s| s.to_owned())
+            .unwrap_or(color)
+    });
+    let opt = EditLabelOption {
+        color,
+        description,
+        exclusive: Some(exclusive),
+        is_archived: archived,
+        name: new_name,
+    };
+    let label = api
+        .issue_edit_label(repo.owner(), repo.name(), id, opt)
+        .await?;
+    println!(
+        "Changed label {} to {}",
+        crate::render_label(&old_label)?,
+        crate::render_label(&label)?
+    );
+    Ok(())
+}
+
+async fn remove_repo_label(api: &Forgejo, repo: &RepoName, name: String) -> eyre::Result<()> {
+    let label = find_repo_label_by_name(api, repo, &name)
+        .await?
+        .ok_or_eyre("label not found")?;
+    let id = label.id.ok_or_eyre("label does not have id")?;
+    api.issue_delete_label(repo.owner(), repo.name(), id)
+        .await?;
+    println!("Removed label {}", crate::render_label(&label)?);
     Ok(())
 }
