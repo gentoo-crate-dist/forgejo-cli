@@ -887,9 +887,7 @@ pub fn render_label(label: &forgejo_api::structs::Label) -> eyre::Result<String>
     let rgb_bg = format!("\x1b[48;2;{r};{g};{b}m");
     if label.exclusive.unwrap_or_default() {
         let (r2, g2, b2) = darken(r, g, b);
-        let (category, name) = name
-            .split_once("/")
-            .unwrap_or(("", name));
+        let (category, name) = name.split_once("/").unwrap_or(("", name));
         let rgb_bg_dark = format!("\x1b[48;2;{r2};{g2};{b2}m");
         write!(
             &mut s,

@@ -1012,8 +1012,14 @@ async fn edit_issue_labels(
             .find(|label| label.name.as_ref() == Some(label_name));
         if let Some(label) = maybe_label {
             let id = label.id.ok_or_eyre("label does not have id")?;
-            api.issue_remove_label(repo.owner(), repo.name(), issue, &id.to_string(), opts.clone())
-                .await?;
+            api.issue_remove_label(
+                repo.owner(),
+                repo.name(),
+                issue,
+                &id.to_string(),
+                opts.clone(),
+            )
+            .await?;
         } else {
             unknown_labels.push(label_name);
         }

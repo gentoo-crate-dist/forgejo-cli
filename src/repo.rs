@@ -1271,8 +1271,17 @@ impl LabelSubcommand {
                 exclusive,
                 archived,
             } => {
-                edit_repo_label(api, repo, name, new_name, color, description, exclusive, archived)
-                    .await?
+                edit_repo_label(
+                    api,
+                    repo,
+                    name,
+                    new_name,
+                    color,
+                    description,
+                    exclusive,
+                    archived,
+                )
+                .await?
             }
             LabelSubcommand::Rm { name } => remove_repo_label(api, repo, name).await?,
         }
@@ -1296,9 +1305,12 @@ async fn find_repo_label_by_name(
     let (_, labels) = api
         .issue_list_labels(repo.owner(), repo.name(), IssueListLabelsQuery::default())
         .await?;
-    Ok(labels
-        .into_iter()
-        .find(|label| label.name.as_deref().is_some_and(|label_name| label_name == name)))
+    Ok(labels.into_iter().find(|label| {
+        label
+            .name
+            .as_deref()
+            .is_some_and(|label_name| label_name == name)
+    }))
 }
 
 async fn add_repo_label(
