@@ -187,6 +187,16 @@ pub enum EditCommand {
         idx: usize,
         new_body: Option<String>,
     },
+    /// Assign a user to an issue
+    Assign {
+        /// Username to assign
+        user: String,
+    },
+    /// Unassign a user from an issue
+    Unassign {
+        /// Username to unassign (omit to clear all)
+        user: Option<String>,
+    },
 }
 
 #[derive(Subcommand, Clone, Debug)]
@@ -250,6 +260,12 @@ impl IssueCommand {
                 }
                 EditCommand::Comment { idx, new_body } => {
                     edit_comment(repo, &api, issue.number, idx, new_body).await?
+                }
+                EditCommand::Assign { user } => {
+                    edit_assign(repo, &api, issue.number, user).await?
+                }
+                EditCommand::Unassign { user } => {
+                    edit_unassign(repo, &api, issue.number, user).await?
                 }
             },
             Close { issue, with_msg } => close_issue(repo, &api, issue.number, with_msg).await?,
@@ -866,6 +882,98 @@ pub async fn edit_comment(
         },
     )
     .await?;
+    Ok(())
+}
+
+pub async fn edit_assign(
+    repo: &RepoName,
+    api: &Forgejo,
+    issue: i64,
+    user: String,
+) -> eyre::Result<()> {
+    let issue_data = api.issue_get_issue(repo.owner(), repo.name(), issue).await?;
+    let mut assignees: Vec<String> = issue_data
+        .assignees
+        .unwrap_or_default()
+        .iter()
+        .filter_map(|u| u.login.clone())
+        .collect();
+    if assignees.iter().any(|a| a.eq_ignore_ascii_case(&user)) {
+        eprintln!("{user} is already assigned to #{issue}");
+        return Ok(());
+    }
+    assignees.push(user.clone());
+    api.issue_edit_issue(
+        repo.owner(),
+        repo.name(),
+        issue,
+        EditIssueOption {
+            assignees: Some(assignees),
+            assignee: None,
+            body: None,
+            due_date: None,
+            milestone: None,
+            r#ref: None,
+            state: None,
+            title: None,
+            unset_due_date: None,
+            updated_at: None,
+        },
+    )
+    .await?;
+    eprintln!("assigned {user} to #{issue}");
+    Ok(())
+}
+
+pub async fn edit_unassign(
+    repo: &RepoName,
+    api: &Forgejo,
+    issue: i64,
+    user: Option<String>,
+) -> eyre::Result<()> {
+    let assignees = match user {
+        Some(ref user) => {
+            let issue_data = api.issue_get_issue(repo.owner(), repo.name(), issue).await?;
+            let current: Vec<String> = issue_data
+                .assignees
+                .unwrap_or_default()
+                .iter()
+                .filter_map(|u| u.login.clone())
+                .collect();
+            if !current.iter().any(|a| a.eq_ignore_ascii_case(user)) {
+                eprintln!("{user} is not assigned to #{issue}");
+                return Ok(());
+            }
+            let filtered: Vec<String> = current
+                .into_iter()
+                .filter(|a| !a.eq_ignore_ascii_case(user))
+                .collect();
+            filtered
+        }
+        None => Vec::new(),
+    };
+    api.issue_edit_issue(
+        repo.owner(),
+        repo.name(),
+        issue,
+        EditIssueOption {
+            assignees: Some(assignees),
+            assignee: None,
+            body: None,
+            due_date: None,
+            milestone: None,
+            r#ref: None,
+            state: None,
+            title: None,
+            unset_due_date: None,
+            updated_at: None,
+        },
+    )
+    .await?;
+    match user {
+        Some(user) => eprintln!("unassigned {user} from #{issue}"),
+        None => eprintln!("cleared all assignees from #{issue}"),
+    }
     Ok(())
 }
 
