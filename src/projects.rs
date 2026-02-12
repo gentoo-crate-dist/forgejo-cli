@@ -2547,7 +2547,21 @@ async fn display_board(
                         if verbose {
                             print_verbose_card(issue_num, issue_title, issue);
                         } else {
-                            println!("  #{:<4} {}", issue_num, issue_title);
+                            let assignee_str = match &issue.assignees {
+                                Some(assignees) if !assignees.is_empty() => {
+                                    let names: Vec<_> = assignees.iter()
+                                        .filter_map(|a| a.login.as_deref())
+                                        .map(|n| format!("@{}", n))
+                                        .collect();
+                                    if names.is_empty() {
+                                        "(unassigned)".to_string()
+                                    } else {
+                                        names.join(",")
+                                    }
+                                }
+                                _ => "(unassigned)".to_string(),
+                            };
+                            println!("  #{:<4} {}  {}", issue_num, issue_title, assignee_str);
                         }
                     }
                 }
