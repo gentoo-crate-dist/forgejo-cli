@@ -49,6 +49,9 @@ pub enum IssueSubcommand {
         /// The repo to create this issue on
         #[clap(long, short)]
         repo: Option<RepoArg>,
+        /// Assign users (comma-separated)
+        #[clap(long)]
+        assignee: Option<String>,
         /// Open the issue creation page in your web browser
         #[clap(long)]
         web: bool,
@@ -223,6 +226,7 @@ impl IssueCommand {
                 body_file,
                 template,
                 no_template,
+                assignee,
                 web,
             } => {
                 create_issue(
@@ -233,6 +237,7 @@ impl IssueCommand {
                     body_file,
                     template,
                     no_template,
+                    assignee,
                     web,
                 )
                 .await?
@@ -347,8 +352,10 @@ async fn create_issue(
     body_file: Option<PathBuf>,
     template: Option<String>,
     no_template: bool,
+    assignee: Option<String>,
     web: bool,
 ) -> eyre::Result<()> {
+    let assignees = assignee.map(|s| s.split(',').map(|s| s.trim().to_string()).collect::<Vec<_>>());
     match (title, web) {
         (Some(title), false) => {
             let body_from_file = match body_file {
@@ -367,7 +374,7 @@ async fn create_issue(
                 .blank_issues_enabled
                 .unwrap_or(true);
 
-            let opts = if let Some(template_name) = template {
+            let mut opts = if let Some(template_name) = template {
                 eyre::ensure!(
                     has_templates,
                     "{}/{} does not have any issue templates",
@@ -428,6 +435,7 @@ async fn create_issue(
                 }
             };
 
+            opts.assignees = assignees.clone();
             let issue = api
                 .issue_create_issue(repo.owner(), repo.name(), opts)
                 .await?;
@@ -508,6 +516,17 @@ pub async fn view_issue(repo: &RepoName, api: &Forgejo, id: i64) -> eyre::Result
         StateType::Open => println!("{bright_green}Open{reset}"),
         StateType::Closed => println!("{bright_red}Closed{reset}"),
     };
+
+    let assignees: Vec<&str> = issue
+        .assignees
+        .as_deref()
+        .unwrap_or_default()
+        .iter()
+        .filter_map(|u| u.login.as_deref())
+        .collect();
+    if !assignees.is_empty() {
+        println!("Assigned to {white}{}{reset}", assignees.join(", "));
+    }
 
     if let Some(body) = &issue.body {
         if !body.is_empty() {

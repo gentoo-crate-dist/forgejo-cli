@@ -79,6 +79,9 @@ pub enum PrSubcommand {
         /// Open the PR creation page in your web browser
         #[clap(short, long, group = "web-or-cmd", group = "web-or-agit")]
         web: bool,
+        /// Assign users (comma-separated)
+        #[clap(long)]
+        assignee: Option<String>,
         /// Open the PR using AGit workflow
         #[clap(short, long, group = "source", group = "web-or-agit")]
         agit: bool,
@@ -302,6 +305,7 @@ impl PrCommand {
                 body_file,
                 autofill,
                 repo: _,
+                assignee,
                 web,
                 agit,
             } => {
@@ -314,6 +318,7 @@ impl PrCommand {
                     body,
                     body_file,
                     autofill,
+                    assignee,
                     web,
                     agit,
                     repo_info.remote_name(),
@@ -562,6 +567,18 @@ pub async fn view_pr(repo: &RepoName, api: &Forgejo, id: Option<i64>) -> eyre::R
     println!(
         "By {white}{username}{reset} {dash} {state} {dash} {bright_green}+{additions} {bright_red}-{deletions}{reset}"
     );
+
+    let assignees: Vec<&str> = pr
+        .assignees
+        .as_deref()
+        .unwrap_or_default()
+        .iter()
+        .filter_map(|u| u.login.as_deref())
+        .collect();
+    if !assignees.is_empty() {
+        println!("Assigned to {white}{}{reset}", assignees.join(", "));
+    }
+
     if head_name.is_empty() {
         println!("Into `{base_name}`");
     } else {
@@ -995,10 +1012,12 @@ async fn create_pr(
     body: Option<String>,
     body_file: Option<PathBuf>,
     autofill: bool,
+    assignee: Option<String>,
     web: bool,
     agit: bool,
     remote_name: Option<&str>,
 ) -> eyre::Result<()> {
+    let assignees = assignee.map(|s| s.split(',').map(|s| s.trim().to_string()).collect::<Vec<_>>());
     let mut repo_data = api.repo_get(repo.owner(), repo.name()).await?;
 
     let head_branch_name = match head {
@@ -1133,7 +1152,7 @@ async fn create_pr(
             Some((head, head_branch_name)) => {
                 let base_opt = CreatePullRequestOption {
                     assignee: None,
-                    assignees: None,
+                    assignees: assignees.clone(),
                     base: Some(base.to_owned()),
                     body: None,
                     due_date: None,
