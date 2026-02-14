@@ -13,10 +13,6 @@ use forgejo_api::{Forgejo, ForgejoError};
 
 use crate::repo::{RepoArg, RepoInfo, RepoName};
 
-/// Manage Forgejo projects (kanban boards).
-///
-/// Projects can be associated with repositories or organizations.
-/// Use project ID (number) or title to identify projects.
 #[derive(Args, Clone, Debug)]
 pub struct ProjectCommand {
     /// The local git remote that points to the repo to operate on.
