@@ -196,6 +196,15 @@ pub enum EditCommand {
         #[clap(long, short)]
         rm: Vec<String>,
     },
+    /// Edit an issue's assignees
+    Assignees {
+        /// The users to assign.
+        #[clap(long, short)]
+        add: Vec<String>,
+        /// The users to unassign.
+        #[clap(long, short)]
+        rm: Vec<String>,
+    },
 }
 
 #[derive(Subcommand, Clone, Debug)]
@@ -262,6 +271,9 @@ impl IssueCommand {
                 }
                 EditCommand::Labels { add, rm } => {
                     crate::edit_labels(repo, &api, issue.number, add, rm).await?;
+                }
+                EditCommand::Assignees { add, rm } => {
+                    edit_assignees(repo, &api, issue.number, add, rm).await?;
                 }
             },
             Close { issue, with_msg } => close_issue(repo, &api, issue.number, with_msg).await?,
@@ -880,6 +892,48 @@ pub async fn edit_comment(
         },
     )
     .await?;
+    Ok(())
+}
+
+async fn edit_assignees(
+    repo: &RepoName,
+    api: &Forgejo,
+    id: i64,
+    add: Vec<String>,
+    rm: Vec<String>,
+) -> eyre::Result<()> {
+    let issue = api.issue_get_issue(repo.owner(), repo.name(), id).await?;
+    let mut assignees: Vec<String> = issue
+        .assignees
+        .unwrap_or_default()
+        .into_iter()
+        .filter_map(|u| u.login)
+        .collect();
+
+    for user in &rm {
+        assignees.retain(|a| a != user);
+    }
+    for user in add {
+        if !assignees.contains(&user) {
+            assignees.push(user);
+        }
+    }
+
+    let opts = forgejo_api::structs::EditIssueOption {
+        assignees: Some(assignees),
+        assignee: None,
+        body: None,
+        due_date: None,
+        milestone: None,
+        r#ref: None,
+        state: None,
+        title: None,
+        unset_due_date: None,
+        updated_at: None,
+    };
+    api.issue_edit_issue(repo.owner(), repo.name(), id, opts)
+        .await?;
+    println!("updated assignees for issue #{id}");
     Ok(())
 }
 
