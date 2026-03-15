@@ -1451,8 +1451,9 @@ async fn view_prs(
         mentioned_by: None,
         sort: None,
     };
-    let (_, prs) = api
+    let prs = api
         .issue_list_issues(repo.owner(), repo.name(), query)
+        .all()
         .await?;
     if prs.len() == 1 {
         println!("1 pull request");
