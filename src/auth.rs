@@ -1,5 +1,6 @@
 use clap::Subcommand;
 use eyre::OptionExt;
+use sha2::Digest;
 
 use std::collections::BTreeMap;
 #[cfg(unix)]
@@ -203,7 +204,7 @@ async fn oauth_login(
         .map(|_| rng.sample(Alphanumeric) as char)
         .collect::<String>();
     let code_challenge =
-        base64ct::Base64Url::encode_string(sha256::digest(&code_verifier).as_bytes());
+        base64ct::Base64UrlUnpadded::encode_string(sha2::Sha256::digest(&code_verifier).as_slice());
 
     let mut auth_url = host.clone();
     auth_url
