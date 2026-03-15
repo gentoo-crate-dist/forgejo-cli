@@ -92,6 +92,9 @@ pub enum IssueSubcommand {
         /// Filter issues by state. Default: open
         #[clap(long, short)]
         state: Option<State>,
+        /// Filter by milestone name
+        #[clap(long, short = 'M')]
+        milestone: Option<String>,
     },
     /// View an issue's info
     View {
@@ -248,7 +251,13 @@ impl IssueCommand {
                 creator,
                 assignee,
                 state,
-            } => view_issues(repo, &api, query, labels, creator, assignee, state).await?,
+                milestone,
+            } => {
+                view_issues(
+                    repo, &api, query, labels, creator, assignee, state, milestone,
+                )
+                .await?
+            }
             Templates { .. } => view_issue_templates(repo, &api).await?,
             Edit { issue, command } => match command {
                 EditCommand::Title { new_title } => {
@@ -530,6 +539,7 @@ async fn view_issues(
     creator: Option<String>,
     assignee: Option<String>,
     state: Option<State>,
+    milestone: Option<String>,
 ) -> eyre::Result<()> {
     let labels = labels
         .map(|s| s.split(',').map(|s| s.to_string()).collect::<Vec<_>>())
@@ -541,7 +551,7 @@ async fn view_issues(
         assigned_by: assignee,
         state: state.map(|s| s.into()),
         r#type: None,
-        milestones: None,
+        milestones: milestone,
         since: None,
         before: None,
         mentioned_by: None,

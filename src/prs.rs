@@ -44,6 +44,9 @@ pub enum PrSubcommand {
         /// The repo to search in
         #[clap(long, short)]
         repo: Option<RepoArg>,
+        /// Filter by milestone name
+        #[clap(long, short = 'M')]
+        milestone: Option<String>,
     },
     /// Create a new pull request
     Create {
@@ -368,7 +371,13 @@ impl PrCommand {
                 assignee,
                 state,
                 repo: _,
-            } => view_prs(repo, &api, query, labels, creator, assignee, state).await?,
+                milestone,
+            } => {
+                view_prs(
+                    repo, &api, query, labels, creator, assignee, state, milestone,
+                )
+                .await?
+            }
             Edit { pr, command } => {
                 let pr = pr.map(|pr| pr.number);
                 match command {
@@ -1434,6 +1443,7 @@ async fn view_prs(
     creator: Option<String>,
     assignee: Option<String>,
     state: Option<crate::issues::State>,
+    milestone: Option<String>,
 ) -> eyre::Result<()> {
     let labels = labels
         .map(|s| s.split(',').map(|s| s.to_string()).collect::<Vec<_>>())
@@ -1445,7 +1455,7 @@ async fn view_prs(
         assigned_by: assignee,
         state: state.map(|s| s.into()),
         r#type: Some(forgejo_api::structs::IssueListIssuesQueryType::Pulls),
-        milestones: None,
+        milestones: milestone,
         since: None,
         before: None,
         mentioned_by: None,
