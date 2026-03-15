@@ -505,6 +505,12 @@ pub async fn view_issue(repo: &RepoName, api: &Forgejo, id: i64) -> eyre::Result
         StateType::Closed => println!("{bright_red}Closed{reset}"),
     };
 
+    if let Some(ref milestone) = issue.milestone {
+        if let Some(ref title) = milestone.title {
+            println!("Milestone: {title}");
+        }
+    }
+
     crate::render_label_list(&issue.labels.unwrap_or_default())?;
 
     if let Some(body) = &issue.body {

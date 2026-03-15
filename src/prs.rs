@@ -568,6 +568,12 @@ pub async fn view_pr(repo: &RepoName, api: &Forgejo, id: Option<i64>) -> eyre::R
         println!("From `{head_name}` into `{base_name}`");
     }
 
+    if let Some(ref milestone) = pr.milestone {
+        if let Some(ref title) = milestone.title {
+            println!("Milestone: {title}");
+        }
+    }
+
     crate::render_label_list(pr.labels.as_deref().unwrap_or_default())?;
 
     if let Some(body) = &pr.body {
