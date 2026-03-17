@@ -397,6 +397,9 @@ pub enum RepoCommand {
         /// This is not recommended, `--token` should be used instead whenever possible.
         #[clap(long, short)]
         login: bool,
+        /// Set an owning org or user. Defaults to the current user.
+        #[clap(long, short)]
+        owner: Option<String>,
     },
     /// View a repo's info
     View {
@@ -511,6 +514,7 @@ impl RepoCommand {
                 service,
                 token,
                 login,
+                owner,
             } => {
                 let current_repo = RepoInfo::get_current(host_name, None, None, &keys)?;
                 let api = keys.get_api(current_repo.host_url()).await?;
@@ -525,6 +529,7 @@ impl RepoCommand {
                     service,
                     token,
                     login,
+                    owner,
                 )
                 .await?
             }
@@ -970,6 +975,7 @@ async fn migrate_repo(
     service: Option<MigrateService>,
     token: bool,
     login: bool,
+    owner: Option<String>,
 ) -> eyre::Result<()> {
     let include = include.unwrap_or_default();
     let service = service.unwrap_or_default();
@@ -1019,7 +1025,7 @@ async fn migrate_repo(
         pull_requests: Some(include.prs),
         releases: Some(include.releases),
         repo_name: name,
-        repo_owner: None,
+        repo_owner: owner,
         service: Some(service.to_api_type()),
         uid: None,
         wiki: Some(include.wiki),
