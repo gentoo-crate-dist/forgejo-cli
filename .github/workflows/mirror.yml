@@ -15,6 +15,4 @@
           uses: projg2/crate-dist-mirror-action@v2
           with:
             ssh-private-key: ${{ secrets.ssh_key }}
-            
-            
-            upstream-repo: forgejo-contrib/forgejo-cli
+            upstream-repo: https://codeberg.org/forgejo-contrib/forgejo-cli
