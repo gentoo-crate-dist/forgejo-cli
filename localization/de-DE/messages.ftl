@@ -9,7 +9,7 @@ msg-auth-login-oauth_unsupported =
 
     Bitte besuchen Sie { $applications_url },
     um einen Token zu erstellen und verwenden Sie diesen mit `fj auth add-key`, um sich anzumelden.
-msg-auth-login-canceled = Login abgebrochen
+msg-auth-login-canceled = Anmeldung abgebrochen
 msg-auth-login-browser_success = Authentifiziert! Schließen Sie diesen Tab und gehen sie zurück zu Ihrem Terminal.
 msg-auth-login-browser_failure = Authentifikation fehlgeschlagen.
 msg-auth_logout-success = Abgemeldet von: { $host }
@@ -19,7 +19,7 @@ msg-auth-use_ssh-enabled = SSH wird jetzt standardmäßig für { $host } verwend
 msg-auth-use_ssh-disabled = SSH wird nun standardmäßig für { $host } nicht mehr verwendet.
 msg-auth-use_ssh-already_enabled = SSH wird bereits standardmäßig für { $host } verwendet.
 msg-auth-use_ssh-already_disabled = SSH wird bereits standardmäßig für { $host } nicht verwendet.
-msg-auth-add_key-prompt = neuer Schlüssel:
+msg-auth-add_key-prompt = Neuer Schlüssel:
 msg-auth-add_key-already_exists = Schlüssel für { $host } existiert bereits
 msg-auth-list-none = Kein Logins.
 msg-actions-variable-create-already_exists = Die Variable existiert bereits. Übergeben Sie --force, um sie zu ersetzen.
@@ -634,3 +634,51 @@ msg-version-update_check-behind =
     Laden Sie sie hier herunter { $url }
 msg-version-update_check-ahead = Sie sind der neusten veröffentlichten Version voraus.
 msg-wiki-clone-success = Wiki von { $repo } nach { $path } geklont
+help-arg-remote = Das lokale Git Remote, das auf das Zielrepo zeigt
+help-arg-repo = Das Zielrepo der Aktion
+help-cmd-auth-login = Anmeldung auf einer Instanz
+help-cmd-auth-login-long =
+    Anmeldung auf einer Instanz
+
+    Öffnet eine Anmeldeseite in ihrem Webbrowser
+help-cmd-auth-logout = Löscht die lokalen Login Daten zu einer Instanz
+help-cmd-auth-use_ssh = (De-)aktiviert SSH als Standard für gegebene Instanzen
+help-cmd-auth-add_key = Fügt ein Anwendungstoken für eine Instanz hinzu
+help-cmd-auth-add_key-long =
+    Fügt ein Anwendungstoken für eine Instanz hinzu
+
+    Verwenden sie diese Option, wenn `fj auth login` nicht funktionieren sollte.
+help-arg-auth-add_key-key = Der Schlüssel, der hinzugefügt werden soll. Ist dieser nicht vorhanden wird er aus der Standardeingabe gelesen
+help-cmd-auth-list = Zählt alle Instanzen auf, auf denen sie aktuell angemeldet sind
+help-cmd-actions-variables-list = Zählt die Variablen auf
+help-arg-actions-variables-list-verbose = owner_id und repo_id werden ebenfalls ausgegeben
+help-cmd-actions-variables-create = Erstelle eine neue Variable
+help-arg-actions-variables-create-name = Der Name der neuen Variable
+help-arg-actions-variables-create-data = Der Wert, der in der Variable gespeichert werden soll. Lassen sie diesen aus, um den Texteditor aufzurufen
+help-arg-actions-variables-create-force = Ersetzt bestehende Variablen
+help-cmd-actions-variables-delete = Löscht eine Variable
+help-arg-actions-variables-delete-name = Die zu löschende Variable
+help-cmd-actions-dispatch = Stößt einen Workflow an
+help-arg-actions-dispatch-name = Name des Workflows, der angestoßen werden soll
+help-arg-actions-dispatch-ref = Git Revision, auf welcher der Workflow angestoßen werden soll
+help-arg-org-options-full_name = Der Anzeigename der Organisation
+help-arg-org-options-full_name-long =
+    Der Anzeigename der Organisation
+
+    Dies hat nicht die Einschränkungen des `name` Arguments und kann beliebigen UTF-8 Text beinhalten
+help-arg-org-options-description = Die Beschreibung der Organisation
+help-arg-org-options-email = Die Kontakt E-Mail Adresse der Organisation
+help-arg-org-options-location = Der Standort der Organisation
+help-arg-org-options-website = Die Website der Organisation
+help-arg-org-options-visibility = Das Sichtbarkeitslevel der Organisation
+help-arg-org-options-admin_can_change_team_access = Einstellung, ob der Administrator eines Repos den Zugang von Teams der Organisation zum Repo ändern kann
+help-cmd-org-create = Erstelle eine neue Organisation
+help-arg-org-create-name = Der Benutzername für die Organisation
+help-arg-org-create-name-long =
+    Der Benutzername für die Organisation
+
+    Dieser kann nur alphanumerische Zeichen, Binde- und Unterstrich und Punkte beinhalten.
+    Er muss mit einem alphanumerischen Zeichen starten und kann keine aufeinanderfolgenden
+    Binde- und Unterstriche oder Punkte enthalten.
+
+    Wollen sie einen Namen ohne diese Einschränkungen, steht die `--full-name` Option zur Verfügung.
