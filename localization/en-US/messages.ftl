@@ -1408,3 +1408,12 @@ help-cmd-repo-watch_status = Check your current watch status
 help-arg-repo-watch_status-list = List all watched repos instead of checking status
 
 help-arg-cwd = Sets the working directory to <CWD>
+
+msg-project-dir-not-found = Could not find project directory for fj
+msg-old-key-file-read =
+    Note: Reading from the keys file in the old location.
+        That location is deprecated. The keys file will be saved to the new location.
+msg-key-file-not-found = Could not find keys file. Creating a new file.
+msg-save-migrated-key-file-fail = 
+    {STYLE("bold", "yellow")}Could not migrate key file to the new location!
+    Please ensure, fj can write to {$path}. The old file has not been modified.{STYLE("reset")}
