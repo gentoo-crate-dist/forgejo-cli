@@ -458,7 +458,9 @@ impl SpecialRender {
 }
 
 fn max_line_length() -> usize {
-    let (terminal_width, _) = crossterm::terminal::size().unwrap_or((80, 24));
+    let terminal_width = terminal_size::terminal_size()
+        .map(|(w, _)| w.0)
+        .unwrap_or(80);
     (terminal_width as usize - 2).min(80)
 }
 
