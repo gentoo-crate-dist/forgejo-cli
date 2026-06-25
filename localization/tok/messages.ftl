@@ -470,3 +470,90 @@ msg-activity-approved_pr = { STYLE("bold") }{ $actor }{ STYLE("reset") } la { ST
 msg-user-key-list-count = nimi SSH { $keys } li lon
 msg-user-key-list-header = { STYLE("bold") }nimi SSH nanpa { STYLE("bright-magenta") }{ $id }{ STYLE("reset") }
 msg-user-key-list-title = { STYLE("bold") }nimi lukin:{ STYLE("reset") }       { STYLE("bright-cyan") }{ $title }{ STYLE("reset") }
+help-arg-repo = o ni lon poki seme
+help-cmd-auth-login = o kama lon sijelo pi ma wan
+help-cmd-auth-login-long =
+    o kama lon sijelo pi ma wan
+
+    lipu pi alasa ken li open lon ilo linluwi sina
+help-cmd-auth-logout = o weka e sona ni: sijelo sina pi ma wan
+help-cmd-auth-add_key = o pana e nimi len ilo pi ma wan
+help-cmd-auth-add_key-long =
+    o pana e nimi len ilo pi ma wan
+
+    sina ken ala kepeken `fj auth login` la, o kepeken ni
+help-arg-auth-add_key-key = o pana e nimi len ilo seme
+help-cmd-auth-list = o lukin e sijelo sina ale
+help-arg-actions-tasks-page = o lukin e kulupu alasa nanpa seme
+help-cmd-actions-variables = o lawa e ijo sona ona
+help-cmd-actions-variables-list = o lukin e ijo sona ona ale
+help-arg-actions-variables-list-verbose = kin la, o lukin e ijo pi nimi 'owner_id' e ijo pi nimi 'repo_id'
+help-cmd-actions-variables-create = o pana e ijo sona sin
+help-arg-actions-variables-create-name = nimi ona o seme
+help-arg-actions-variables-create-data = ona o poki e sona seme? sina pana ala e ni, ilo sina pi toki ante li open
+help-arg-actions-variables-create-force = ijo sona ni li lon la o ante e ona
+help-cmd-actions-variables-delete = o weka e ijo sona
+help-arg-actions-variables-delete-name = o weka e ijo sona seme
+help-cmd-actions-secrets = o lawa e ijo sona len
+help-cmd-actions-secrets-list = o lukin e ijo sona len ona ale
+help-cmd-actions-secrets-create = o pana e ijo sona len sin
+help-arg-actions-secrets-create-name = nimi ona o seme
+help-arg-actions-secrets-create-data = ona o poki e sona seme
+help-cmd-actions-secrets-delete = o weka e ijo sona len
+help-arg-actions-secrets-delete-name = o weka e ijo sona len seme
+help-cmd-org-list = o lukin e kulupu ale
+help-arg-org-list-page = o lukin e kulupu alasa nanpa seme
+help-arg-org-list-only_member_of = o lukin e kulupu ni taso: sina lon ona
+help-cmd-org-view = o lukin e kulupu
+help-arg-org-view-name = o lukin e kulupu seme
+help-arg-org-options-full_name = nimi lukin ona o seme
+help-arg-org-options-full_name-long =
+    nimi lukin ona o seme
+
+    ken ala pi nimi `name` la nimi lukin li ni ala. ona li ken kepeken sitelen UTF-8 ale
+help-arg-org-options-description = toki sona pi kulupu ni o seme
+help-arg-org-options-email = nimi Email pi kulupu ni o seme
+help-arg-org-options-location = kulupu li lon ma seme
+help-arg-org-options-website = nimi pi lipu linluwi ona li seme
+help-arg-org-options-visibility = seme li ken lukin e kulupu ni
+help-arg-org-options-visibility-long =
+    seme li ken lukin e kulupu ni
+
+    'public' la ale li ken lukin e ona
+    'limited' la jan pi ma ni taso li ken lukin e ona
+    'private' la jan pi kulupu ni taso li ken lukin e ona
+help-cmd-org-create = o open e kulupu sin
+help-arg-org-create-name = nimi ona o seme
+help-arg-org-create-name-long =
+    nimi ona o seme
+
+    ona li ken kepeken sitelen Lasina anu sitelen nanpa anu sitelen '-' anu sitelen '_' anu sitelen '.' taso
+    sitelen open ona en sitelen pini ona o sitelen Lasina
+    sitelen '-' anu sitelen '_' anu sitelen '.' li ken ala poka e sitelen sama
+
+    ni la nimi wile sina li ken ala la, o kepeken nimi '--full-name'
+help-cmd-org-edit = o ante e sona kulupu
+help-arg-org-edit-name = o ante e sona pi kulupu seme
+help-arg-org-edit-name-long =
+    o ante e sona pi kulupu seme
+
+    o pana e nimi ona, o pana ala e nimi lukin ona
+help-cmd-org-activity = o lukin e pali kulupu
+help-arg-org-activity-name = o lukin e pali pi kulupu seme
+help-cmd-org-members = o lukin e jan kulupu
+help-arg-org-members-org = o lukin e jan pi kulupu seme
+help-arg-org-members-page = o lukin e kulupu alasa nanpa seme
+help-cmd-org-visibility = o lukin anu ante e ni: seme li ken sona e ni: sina lon kulupu
+help-arg-org-visibility-org = o ante e sona sina pi kulupu seme
+help-arg-org-visibility-set = o ante e ni: seme li ken sona e ni: sina lon kulupu ni
+help-cmd-org-label-list = o lukin e kule ale kulupu
+help-arg-org-label-list-org = o lukin e kule pi kulupu seme
+help-cmd-org-label-add = o open e kule sin lon kulupu
+help-arg-org-label-add-org = o open e kule sin lon kulupu seme
+help-arg-org-label-add-name = nimi pi kule sin o seme
+help-arg-org-label-add-color = kule lukin pi kule sin o seme. o kepeken nasin 'Hexcode'
+help-arg-org-label-add-description = toki sona pi kule sin o seme
+help-arg-org-label-add-exclusive = nimi ona li sama { "'{nimi suli}/{nimi lili}'" } la o ni: kule wan taso pi nimi suli li ken lon toki
+help-cmd-org-label-edit = o ante e kule kulupu
+help-arg-org-label-edit-org = o ante e kule pi kulupu seme
+help-arg-org-label-edit-name = o ante e kule seme
