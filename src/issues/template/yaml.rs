@@ -458,7 +458,7 @@ impl YamlTemplate {
         let arena = &comrak::Arena::new();
 
         let output = arena.alloc(NodeValue::Document.into());
-        for (item, field_value) in self.body.iter().zip(form.into_iter()) {
+        for (item, field_value) in self.body.iter().zip(form) {
             if !item.visibility().content {
                 continue;
             }

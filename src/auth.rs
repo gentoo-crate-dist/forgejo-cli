@@ -102,7 +102,7 @@ impl AuthCommand {
                 if keys.hosts.is_empty() {
                     ftl_eprintln!("msg-auth-list-none");
                 }
-                for (host_url, _) in &keys.hosts {
+                for host_url in keys.hosts.keys() {
                     println!("{}", host_url);
                 }
             }
