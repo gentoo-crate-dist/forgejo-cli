@@ -682,3 +682,30 @@ help-arg-org-create-name-long =
     Binde- und Unterstriche oder Punkte enthalten.
 
     Wollen sie einen Namen ohne diese Einschränkungen, steht die `--full-name` Option zur Verfügung.
+help-cmd-actions-tasks = Listet die Aufgaben einer Repo auf
+help-arg-actions-tasks-page = Die Seite, die angezeigt werden soll. Beinhaltet immer bis zu 20 Aufgaben
+help-cmd-actions-variables = Liste Variablen auf und verwalte diese
+help-arg-actions-dispatch-inputs = Werte, die der Ausführung als Eingaben übergeben werden sollen
+help-cmd-actions-secrets = Liste Geheimnisse auf und verwalte diese
+help-cmd-actions-secrets-list = Liste Geheimnisse auf
+help-cmd-actions-secrets-create = Erstelle ein neues Geheimnis für Aktionen
+help-arg-actions-secrets-create-name = Der Name des neuen Geheimnisses
+help-arg-actions-secrets-create-data = Die Daten, die in dem Geheimnis gespeichert werden sollen
+help-cmd-actions-secrets-delete = Lösche ein Geheimnis für Aktionen
+help-arg-actions-secrets-delete-name = Das Geheimnis, das gelöscht werden soll
+help-cmd-org-list = Liste alle Organisationen auf
+help-arg-org-list-page = Welche Seite der Ergebnisse angezeigt werden soll
+help-arg-org-list-only_member_of = Liste Organisationen auf, bei denen Sie Mitglied sind
+help-cmd-org-view = Zeige Informationen über eine Organisation an
+help-arg-org-view-name = Der Name der anzuzeigenden Organisation
+help-cmd-org-edit = Bearbeite die Informationen einer Organisation
+help-arg-org-edit-name = Der Name der zu bearbeitenden Organisation
+help-arg-org-edit-name-long =
+    Der Name der zu bearbeitenden Organisation
+
+    Beachten Sie, dass dies der Nutzername ist, *nicht* der Anzeigename.
+help-cmd-org-activity = Zeige die Aktivität einer Organisation an
+help-arg-org-activity-name = Der Name der Organisation, deren Aktivität angezeigt werden soll
+help-cmd-org-members = Liste Mitglieder einer Organisation auf
+help-arg-org-members-org = Der Name der Organisation, deren Mitglieder angezeigt werden sollen
+help-arg-org-members-page = Welche Seite der Ergebnisse angezeigt werden soll
