@@ -1393,3 +1393,15 @@ help-arg-wiki-clone-identity_file = An SSH key file to use when cloning over SSH
 msg-wiki-clone-success = Cloned {$repo}'s wiki into {$path}
 
 msg-auth-login-oauth-login-open-fail = Unable to process OAuth login due to an error
+
+msg-repo-watch-success = You are now watching {$owner}/{$repo}
+msg-repo-watch-already_subscribed = You already watch this repo
+msg-repo-unwatch-already_unsubscribed = You already don't watch this repo
+msg-repo-unwatch-success = You no longer watch {$owner}/{$repo}
+msg-repo-watch_status-subscribed = You are subscribed to {$owner}/{$repo}
+msg-repo-watch_status-unsubscribed = You are not subscribed to {$owner}/{$repo}
+msg-repo-watch_status-list-header = You are subscribed to {$count} repos
+msg-repo-watch_status-list-repo = Subscribed to {$owner}/{$repo}
+help-cmd-repo-watch = Subscribe to a repo
+help-cmd-repo-unwatch = Unsubscribe from a repo
+help-cmd-repo-watch_status = Check your current watch status

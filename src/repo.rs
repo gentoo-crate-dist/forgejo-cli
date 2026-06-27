@@ -2,7 +2,10 @@ use std::{io::Write, path::PathBuf, str::FromStr};
 
 use clap::{Args, Subcommand};
 use eyre::{eyre, Context, OptionExt, Result};
-use forgejo_api::{structs::CreateRepoOption, Forgejo};
+use forgejo_api::{
+    structs::{CreateRepoOption, Repository},
+    ApiError, ApiErrorKind, Forgejo, ForgejoError,
+};
 use url::Url;
 
 use crate::{
@@ -434,6 +437,26 @@ pub enum RepoCommand {
         #[clap(long, short = 'R')]
         remote: Option<String>,
     },
+    #[clap(about = h!("cmd-repo-watch"))]
+    Watch {
+        repo: Option<RepoArg>,
+        #[clap(long, short = 'R')]
+        remote: Option<String>,
+    },
+    #[clap(about = h!("cmd-repo-unwatch"))]
+    Unwatch {
+        repo: Option<RepoArg>,
+        #[clap(long, short = 'R')]
+        remote: Option<String>,
+    },
+    #[clap(about = h!("cmd-repo-watch_status"))]
+    WatchStatus {
+        repo: Option<RepoArg>,
+        #[clap(long, short = 'R')]
+        remote: Option<String>,
+        #[clap(long, conflicts_with("repo"))]
+        list: bool,
+    },
     #[clap(about = h!("cmd-repo-delete"), long_about = lh!("cmd-repo-delete"))]
     Delete { repo: RepoArg },
     #[clap(about = h!("cmd-repo-browse"))]
@@ -676,6 +699,73 @@ impl RepoCommand {
                     owner = name.owner(),
                     repo = name.name(),
                 );
+            }
+            RepoCommand::Watch { repo, remote } => {
+                let repo =
+                    RepoInfo::get_current(host_name, repo.as_ref(), remote.as_deref(), keys)?;
+                let api = keys.get_api(repo.host_url()).await?;
+                let name = repo
+                    .name()
+                    .ok_or_else(|| ftl_eyre!("msg-repo-name_needed"))?;
+                let subscribed = check_repo_watch_status(&api, name.owner(), name.name()).await?;
+                if subscribed {
+                    ftl_println!("msg-repo-watch-already_subscribed");
+                    return Ok(());
+                }
+                api.user_current_put_subscription(name.owner(), name.name())
+                    .await?;
+                ftl_println!(
+                    "msg-repo-watch-success",
+                    owner = name.owner(),
+                    repo = name.name()
+                );
+            }
+            RepoCommand::Unwatch { repo, remote } => {
+                let repo =
+                    RepoInfo::get_current(host_name, repo.as_ref(), remote.as_deref(), keys)?;
+                let api = keys.get_api(repo.host_url()).await?;
+                let name = repo
+                    .name()
+                    .ok_or_else(|| ftl_eyre!("msg-repo-name_needed"))?;
+                let subscribed = check_repo_watch_status(&api, name.owner(), name.name()).await?;
+                if !subscribed {
+                    ftl_println!("msg-repo-unwatch-already_unsubscribed");
+                    return Ok(());
+                }
+                api.user_current_delete_subscription(name.owner(), name.name())
+                    .await?;
+                ftl_println!(
+                    "msg-repo-unwatch-success",
+                    owner = name.owner(),
+                    repo = name.name()
+                );
+            }
+            RepoCommand::WatchStatus { repo, remote, list } => {
+                let repo =
+                    RepoInfo::get_current(host_name, repo.as_ref(), remote.as_deref(), keys)?;
+                let api = keys.get_api(repo.host_url()).await?;
+                if list {
+                    let (_, subscribed_repos) = api.user_current_list_subscriptions().await?;
+                    print_subscriptions(&subscribed_repos.as_slice());
+                    return Ok(());
+                }
+                let name = repo
+                    .name()
+                    .ok_or_else(|| ftl_eyre!("msg-repo-name_needed"))?;
+                let subscribed = check_repo_watch_status(&api, name.owner(), name.name()).await?;
+                if subscribed {
+                    ftl_println!(
+                        "msg-repo-watch_status-subscribed",
+                        owner = name.owner(),
+                        repo = name.name()
+                    );
+                } else {
+                    ftl_println!(
+                        "msg-repo-watch_status-unsubscribed",
+                        owner = name.owner(),
+                        repo = name.name()
+                    );
+                }
             }
             RepoCommand::Delete { repo } => {
                 let repo = RepoInfo::get_current(host_name, Some(&repo), None, keys)?;
@@ -1117,6 +1207,37 @@ impl DefaultUpdateStyle {
             DefaultUpdateStyle::Rebase => "rebase",
             DefaultUpdateStyle::Merge => "merge",
         }
+    }
+}
+
+async fn check_repo_watch_status(api: &Forgejo, owner: &str, repo: &str) -> eyre::Result<bool> {
+    let response = api.user_current_check_subscription(owner, repo).await;
+    match response {
+        Ok(_) => Ok(true),
+        Err(ForgejoError::ApiError(ApiError {
+            message: _,
+            kind: ApiErrorKind::NotFound { errors: _ },
+        })) => Ok(false),
+        Err(e) => Err(e.into()),
+    }
+}
+
+fn print_subscriptions(repos: &[Repository]) {
+    ftl_println!("msg-repo-watch_status-list-header", count = repos.len());
+    for repo in repos {
+        let owner = repo
+            .owner
+            .as_ref()
+            .iter()
+            .flat_map(|owner| owner.login.as_deref())
+            .next()
+            .unwrap_or("<>");
+        let name = repo.name.as_deref().unwrap_or("<>");
+        ftl_println!(
+            "msg-repo-watch_status-list-repo",
+            owner = owner,
+            repo = name
+        );
     }
 }
 
