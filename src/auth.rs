@@ -1,11 +1,12 @@
 use clap::Subcommand;
+use eyre::Context;
 use sha2::Digest;
 
 use std::collections::BTreeMap;
 #[cfg(unix)]
 use std::path::PathBuf;
 
-use crate::{ftl_eprintln, ftl_format, ftl_println, ftl_readline, h, lh};
+use crate::{ftl_eprintln, ftl_eyre, ftl_format, ftl_println, ftl_readline, h, lh};
 
 #[derive(Subcommand, Clone, Debug)]
 pub enum AuthCommand {
@@ -217,7 +218,8 @@ async fn oauth_login(
         ("code_challenge", &code_challenge),
         ("state", &state),
     ]);
-    open::that_detached(auth_url.as_str()).unwrap();
+    open::that_detached(auth_url.as_str())
+        .wrap_err_with(|| ftl_eyre!("msg-auth-login-oauth-login-open-fail"))?;
 
     let (handle, mut rx) = auth_server();
     let res = rx.recv().await.unwrap();
