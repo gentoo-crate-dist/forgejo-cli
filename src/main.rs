@@ -270,16 +270,15 @@ fn get_ssh_config() -> &'static Option<ssh2_config::SshConfig> {
 }
 
 fn ssh_url_parse(s: &str) -> Result<url::Url, url::ParseError> {
-    let mut url = url::Url::parse(s)?;
-    if url.cannot_be_a_base() {
+    let mut url = url::Url::parse(s).or_else(|_| {
         let mut new_s = String::new();
         new_s.push_str("ssh://");
 
         let auth_end = s.find("@").unwrap_or(0);
         new_s.push_str(&s[..auth_end]);
         new_s.push_str(&s[auth_end..].replacen(":", "/", 1));
-        url = url::Url::parse(&new_s)?
-    }
+        url::Url::parse(&new_s)
+    })?;
     if let Some(host_str) = url.host_str() {
         if let Some(ssh_config) = get_ssh_config() {
             let host_params = ssh_config.query(host_str);
