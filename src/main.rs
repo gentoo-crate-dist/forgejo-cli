@@ -1082,3 +1082,24 @@ pub async fn edit_labels(
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_ssh_url_parse_scp_like() {
+        let url = ssh_url_parse("git@codeberg.org:forgejo-contrib/forgejo-cli.git").unwrap();
+        assert_eq!(url.scheme(), "ssh");
+        assert_eq!(url.host_str(), Some("codeberg.org"));
+        assert_eq!(url.path(), "/forgejo-contrib/forgejo-cli.git");
+    }
+
+    #[test]
+    fn test_ssh_url_parse() {
+        let url = ssh_url_parse("ssh://git@codeberg.org/forgejo-contrib/forgejo-cli.git").unwrap();
+        assert_eq!(url.scheme(), "ssh");
+        assert_eq!(url.host_str(), Some("codeberg.org"));
+        assert_eq!(url.path(), "/forgejo-contrib/forgejo-cli.git");
+    }
+}
