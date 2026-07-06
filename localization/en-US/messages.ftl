@@ -1392,4 +1392,4 @@ help-arg-wiki-clone-ssh = Clone the repo over SSH instead of HTTP(S)
 help-arg-wiki-clone-identity_file = An SSH key file to use when cloning over SSH
 msg-wiki-clone-success = Cloned {$repo}'s wiki into {$path}
 
-
+msg-auth-login-oauth-login-open-fail = Unable to process OAuth login due to an error
