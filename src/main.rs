@@ -270,16 +270,15 @@ fn get_ssh_config() -> &'static Option<ssh2_config::SshConfig> {
 }
 
 fn ssh_url_parse(s: &str) -> Result<url::Url, url::ParseError> {
-    let mut url = url::Url::parse(s)?;
-    if url.cannot_be_a_base() {
+    let mut url = url::Url::parse(s).or_else(|_| {
         let mut new_s = String::new();
         new_s.push_str("ssh://");
 
         let auth_end = s.find("@").unwrap_or(0);
         new_s.push_str(&s[..auth_end]);
         new_s.push_str(&s[auth_end..].replacen(":", "/", 1));
-        url = url::Url::parse(&new_s)?
-    }
+        url::Url::parse(&new_s)
+    })?;
     if let Some(host_str) = url.host_str() {
         if let Some(ssh_config) = get_ssh_config() {
             let host_params = ssh_config.query(host_str);
@@ -1081,4 +1080,25 @@ pub async fn edit_labels(
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_ssh_url_parse_scp_like() {
+        let url = ssh_url_parse("git@codeberg.org:forgejo-contrib/forgejo-cli.git").unwrap();
+        assert_eq!(url.scheme(), "ssh");
+        assert_eq!(url.host_str(), Some("codeberg.org"));
+        assert_eq!(url.path(), "/forgejo-contrib/forgejo-cli.git");
+    }
+
+    #[test]
+    fn test_ssh_url_parse() {
+        let url = ssh_url_parse("ssh://git@codeberg.org/forgejo-contrib/forgejo-cli.git").unwrap();
+        assert_eq!(url.scheme(), "ssh");
+        assert_eq!(url.host_str(), Some("codeberg.org"));
+        assert_eq!(url.path(), "/forgejo-contrib/forgejo-cli.git");
+    }
 }
