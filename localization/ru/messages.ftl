@@ -20,7 +20,7 @@ msg-org-create-success =
         [some] { STYLE("bold", "bright-cyan") }{ $full_name }{ STYLE("reset") } { STYLE("light-gray") }({ $name }){ STYLE("reset") }
     }
 msg-org-label-add-success = Создана новая метка { $label }
-msg-org-label-edit-success = Метка { $old_label } изменена на { $label }
+msg-org-label-edit-success = Метка { $old_label } переименована в { $label }
 msg-org-label-remove-success = Метка { $label } была удалена
 msg-org-repo-list-page_number = Страница { $page } из { $total }
 msg-org-team-view-read_only = Только чтение:
@@ -113,3 +113,79 @@ msg-issue-search-total =
         [few] { $issues } задачи
        *[many] { $issues } задач
     }
+help-arg-repo = Используемый репозиторий
+help-arg-remote = git remote, указывающая на используемый удалённый репозиторий
+help-cmd-auth-login-long =
+    Войти на сервер
+
+    Страница входа будет открыта в браузере
+help-cmd-auth-login = Войти на сервер
+help-cmd-auth-logout = Удалить данные о входе для сервера
+help-cmd-auth-use_ssh = Вкл./выкл. использование SSH по умолчанию для указанных серверов
+msg-auth-use_ssh-not-logged-in = не выполнен вход в { $host }
+msg-auth-use_ssh-enabled = теперь по умолчанию для { $host } будет использован SSH
+msg-auth-use_ssh-disabled = теперь по умолчанию для { $host } НЕ будет использован SSH
+help-cmd-auth-add_key = Добавить токен приложения для сервера
+help-cmd-auth-add_key-long =
+    Добавить токен приложения для сервера
+
+    Используйте, если `fj auth login` не работает.
+help-arg-auth-add_key-key = Добавляемый ключ. Если не указан, будет прочитан из стд. ввода
+help-cmd-auth-list = Список всех серверов, на которых выполнен вход
+help-cmd-actions-secrets = Список и управление секретами
+help-cmd-actions-secrets-list = Вывести секреты списком
+help-cmd-actions-secrets-create = Создать новый секрет
+help-arg-actions-secrets-create-name = Название нового секрета
+help-arg-actions-secrets-create-data = Значение нового секрета
+help-cmd-actions-secrets-delete = Удалить секрет
+help-arg-actions-secrets-delete-name = Секрет, который нужно удалить
+help-cmd-org-list = Вывести все организации списком
+help-arg-org-options-full_name = Отображаемое название организации
+help-arg-org-options-full_name-long =
+    Отображаемое название организации
+
+    В отличии от `name`, не имеет ограничений по типу символов, поддерживает UTF-8.
+help-arg-org-options-description = Описание организации
+help-arg-org-options-email = Контактный адрес эл. почты организации
+help-arg-org-options-location = Расположение организации
+help-arg-org-options-website = Веб-сайт организации
+help-arg-org-options-visibility = Видимость организации
+help-arg-org-options-visibility-long =
+    Видимость организации
+
+    Публичные организации видны всем, ограниченные только пользователям с
+    учётными записями и частные доступны только участникам организации.
+help-cmd-org-create = Создать организацию
+help-arg-org-create-name = Название организации
+help-arg-org-create-name-long =
+    Название организации
+
+    Может включать только латинские буквы, цифры, минусы, нижние подчёркивания и
+    точки. Первым и последним символом могут выступать только буквы. Спец. символы
+    не могут идти подряд.
+
+    Также доступно отображаемое название организации, не имеющее этих ограничений.
+    См. опцию `--full-name`.
+help-cmd-org-activity = Смотреть активность в организации
+help-arg-org-activity-name = Название организации, где смотреть активность
+help-cmd-org-members = Вывести список участников организации
+help-arg-org-members-org = Название организации, участников которой вывести
+help-cmd-org-label-list = Вывести список всех меток задач, добавленных в организации
+help-arg-org-label-list-org = Название организации, метки задач которой вывести
+help-cmd-org-label-add = Добавить новую метку задач в организацию
+help-arg-org-label-add-org = Название организации, в которую добавить метку задач
+help-arg-org-label-add-name = Название добавляемой метки задач
+help-arg-org-label-add-color = HEX-код цвета добавляемой метки задач
+help-arg-org-label-add-description = Описание добавляемой метки задач
+help-cmd-org-label-edit = Изменить метку задач в организации
+help-arg-org-label-edit-org = Название организации, в которой находится метка
+help-arg-org-label-rm-org = Название организации, в которой находится метка
+help-arg-org-label-edit-name = Название изменяемой метки
+help-arg-org-label-edit-new_name = Новое название метки
+help-arg-org-label-edit-color = Новый HEX-код цвета метки
+help-arg-org-label-edit-description = Новое описание метки
+help-cmd-org-label-rm = Удалить метку задач из организации
+help-arg-org-label-edit-archived = Указать архивный статус метки
+help-arg-org-label-rm-label = Название организации, из которой удалить метку
+help-cmd-org-repo-list = Вывести список всех репозиториев организации
+help-arg-org-repo-list-org = Название организации, репозитории которой вывести
