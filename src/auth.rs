@@ -14,10 +14,10 @@ pub enum AuthCommand {
     Login,
     #[clap(about = h!("cmd-auth-logout"))]
     Logout { host: String },
-    #[clap(about = h!("cmd-auth-add_key"), long_about = lh!("cmd-auth-add_key"))]
-    AddKey {
-        #[clap(help = h!("arg-auth-add_key-key"))]
-        key: Option<String>,
+    #[clap(about = h!("cmd-auth-add_token"), long_about = lh!("cmd-auth-add_token"), alias = "add-key")]
+    AddToken {
+        #[clap(help = h!("arg-auth-add_token-token"))]
+        token: Option<String>,
     },
     #[clap(about = h!("cmd-auth-use_ssh"))]
     UseSsh { use_ssh: Option<bool> },
@@ -56,24 +56,24 @@ impl AuthCommand {
                     ftl_println!("msg-auth_logout-already_signed_out", host = host);
                 }
             }
-            AuthCommand::AddKey { key } => {
+            AuthCommand::AddToken { token } => {
                 let repo_info = crate::repo::RepoInfo::get_current(host_name, None, None, keys)?;
                 let host_url = repo_info.host_url();
-                let key = match key {
-                    Some(key) => key,
-                    None => ftl_readline!("msg-auth-add_key-prompt")
+                let token = match token {
+                    Some(token) => token,
+                    None => ftl_readline!("msg-auth-add_token-prompt")
                         .await?
                         .trim()
                         .to_string(),
                 };
                 let host = crate::host_name(host_url);
                 if !keys.hosts.contains_key(host) {
-                    let mut login = crate::keys::LoginInfo::Application { token: key };
+                    let mut login = crate::keys::LoginInfo::Application { token };
                     add_ssh_alias(&mut login, host_url, keys).await;
                     keys.hosts.insert(host.to_owned(), login);
                     keys.save().await?;
                 } else {
-                    ftl_eprintln!("msg-auth-add_key-already_exists", host);
+                    ftl_eprintln!("msg-auth-add_token-already_exists", host);
                 }
             }
             AuthCommand::UseSsh { use_ssh } => {

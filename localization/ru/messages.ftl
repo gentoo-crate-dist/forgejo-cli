@@ -1,5 +1,5 @@
-msg-auth-add_key-prompt = новый ключ:
-msg-auth-add_key-already_exists = ключ для { $host } уже добавлен
+msg-auth-add_token-prompt = новый ключ:
+msg-auth-add_token-already_exists = ключ для { $host } уже добавлен
 msg-actions-variable-create-already_exists = переменная уже существует. Добавьте --force, чтобы заменить её.
 msg-actions-variable-create-already_exists_forced = переменная уже существует и будет изменена.
 msg-actions-variable-delete-success = Переменная { $name } была удалена.

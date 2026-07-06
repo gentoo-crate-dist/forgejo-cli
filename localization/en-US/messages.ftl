@@ -34,14 +34,14 @@ msg-auth-use_ssh-disabled = will no longer use SSH for {$host} by default
 msg-auth-use_ssh-already_enabled = already using SSH for {$host} by default
 msg-auth-use_ssh-already_disabled = already not using SSH for {$host} by default
 
-help-cmd-auth-add_key = Add an application token for an instance
-help-cmd-auth-add_key-long =
+help-cmd-auth-add_token = Add an application token for an instance
+help-cmd-auth-add_token-long =
     Add an application token for an instance
     
     Use this if `fj auth login` doesn't work.
-help-arg-auth-add_key-key = The key to add. If not present, the key will be read in from stdin
-msg-auth-add_key-prompt = new key: 
-msg-auth-add_key-already_exists = key for {$host} already exists
+help-arg-auth-add_token-token = The key to add. If not present, the key will be read in from stdin
+msg-auth-add_token-prompt = new key: 
+msg-auth-add_token-already_exists = key for {$host} already exists
 
 help-cmd-auth-list = List all instances you're currently logged into
 msg-auth-list-none = No logins.
