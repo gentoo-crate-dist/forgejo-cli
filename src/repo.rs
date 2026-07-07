@@ -746,7 +746,7 @@ impl RepoCommand {
                 let api = keys.get_api(repo.host_url()).await?;
                 if list {
                     let (_, subscribed_repos) = api.user_current_list_subscriptions().await?;
-                    print_subscriptions(&subscribed_repos.as_slice());
+                    print_subscriptions(subscribed_repos.as_slice());
                     return Ok(());
                 }
                 let name = repo
