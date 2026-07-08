@@ -38,6 +38,13 @@ pub const USER_AGENT: &str = concat!(
 pub struct App {
     #[clap(long, short = 'H', global = true)]
     host: Option<String>,
+    #[clap(
+        long,
+        short = 'C',
+        global = true,
+        help = h!("arg-cwd")
+    )]
+    cwd: Option<PathBuf>,
     #[clap(long)]
     style: Option<Style>,
     #[clap(subcommand)]
@@ -93,6 +100,10 @@ impl Command {
 #[tokio::main]
 async fn main() -> eyre::Result<()> {
     let args = App::parse();
+
+    if let Some(cwd) = &args.cwd {
+        std::env::set_current_dir(cwd)?;
+    }
 
     let _ = SPECIAL_RENDER.set(SpecialRender::new(args.style.unwrap_or_default()));
 
