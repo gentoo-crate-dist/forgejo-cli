@@ -1405,3 +1405,5 @@ msg-repo-watch_status-list-repo = Subscribed to {$owner}/{$repo}
 help-cmd-repo-watch = Subscribe to a repo
 help-cmd-repo-unwatch = Unsubscribe from a repo
 help-cmd-repo-watch_status = Check your current watch status
+
+help-arg-cwd = Sets the working directory to <CWD>
