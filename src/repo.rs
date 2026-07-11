@@ -1228,9 +1228,7 @@ fn print_subscriptions(repos: &[Repository]) {
         let owner = repo
             .owner
             .as_ref()
-            .iter()
-            .flat_map(|owner| owner.login.as_deref())
-            .next()
+            .and_then(|owner| owner.login.as_deref())
             .unwrap_or("<>");
         let name = repo.name.as_deref().unwrap_or("<>");
         ftl_println!(
