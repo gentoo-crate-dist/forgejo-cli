@@ -454,6 +454,7 @@ pub enum RepoCommand {
         repo: Option<RepoArg>,
         #[clap(long, short = 'R')]
         remote: Option<String>,
+        #[clap(help = h!("arg-repo-watch_status-list"))]
         #[clap(long, conflicts_with("repo"))]
         list: bool,
     },
