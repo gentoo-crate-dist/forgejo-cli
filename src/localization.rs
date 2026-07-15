@@ -1,5 +1,5 @@
 pub mod bundles {
-    use fluent_bundle::{concurrent::FluentBundle, FluentResource};
+    use fluent_bundle::{FluentResource, concurrent::FluentBundle};
     use fluent_datetime::BundleExt;
     use std::sync::LazyLock;
     use std::sync::OnceLock;
@@ -188,11 +188,7 @@ impl AsFluent for bool {
     type FluentType = &'static str;
 
     fn ftl(self) -> Self::FluentType {
-        if self {
-            "yes"
-        } else {
-            "no"
-        }
+        if self { "yes" } else { "no" }
     }
 }
 
@@ -241,9 +237,7 @@ macro_rules! ftl_message {
 
 #[macro_export]
 macro_rules! ftl_pattern {
-    ($msg_id:expr) => {{
-        $crate::ftl_message!($msg_id).and_then(|(b, m)| Some((b, m.value()?)))
-    }};
+    ($msg_id:expr) => {{ $crate::ftl_message!($msg_id).and_then(|(b, m)| Some((b, m.value()?))) }};
 }
 
 #[macro_export]

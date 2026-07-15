@@ -3,11 +3,11 @@ use std::path::PathBuf;
 use std::str::FromStr;
 
 use clap::{Args, Subcommand};
-use eyre::{eyre, Context, OptionExt};
+use eyre::{Context, OptionExt, eyre};
+use forgejo_api::Forgejo;
 use forgejo_api::structs::{
     Comment, CreateIssueCommentOption, CreateIssueOption, EditIssueOption, IssueGetCommentsQuery,
 };
-use forgejo_api::Forgejo;
 
 use crate::repo::{RepoArg, RepoInfo, RepoName};
 use crate::{ftl_bail, ftl_ensure, ftl_eprintln, ftl_println, h, lh};
