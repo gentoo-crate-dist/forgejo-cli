@@ -964,7 +964,7 @@ pub async fn unassign_from_issue(
         .filter_map(|user| user.login)
         .collect::<Vec<_>>();
     let assigned_before = assignees.len();
-    assignees.retain(|a| users.iter().any(|b| a.eq_ignore_ascii_case(b)));
+    assignees.retain(|a| !users.iter().any(|b| a.eq_ignore_ascii_case(b)));
     let assigned_after = assignees.len();
     let opt = forgejo_api::structs::EditIssueOption {
         assignee: None,
