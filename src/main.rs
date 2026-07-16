@@ -946,11 +946,10 @@ pub fn render_label(label: &forgejo_api::structs::Label) -> eyre::Result<String>
     let (r, g, b) = parse_color(color_s)?;
     let text_color = if luma(r, g, b) > 0.5 { black } else { white };
     let rgb_bg = format!("\x1b[48;2;{r};{g};{b}m");
-    if label.exclusive.unwrap_or_default() {
+    if label.exclusive.unwrap_or_default()
+        && let Some((category, name)) = name.split_once("/")
+    {
         let (r2, g2, b2) = darken(r, g, b);
-        let (category, name) = name
-            .split_once("/")
-            .ok_or_eyre("label is exclusive but does not have slash")?;
         let rgb_bg_dark = format!("\x1b[48;2;{r2};{g2};{b2}m");
         write!(
             &mut s,
