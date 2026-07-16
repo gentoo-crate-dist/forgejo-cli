@@ -3,8 +3,8 @@ use eyre::{Context, ContextCompat, OptionExt};
 use forgejo_api::Forgejo;
 
 use crate::{
-    ftl_bail, ftl_ensure, ftl_eyre, ftl_println, h, lh, localization::AsFluent, repo::RepoInfo,
-    SpecialRender,
+    SpecialRender, ftl_bail, ftl_ensure, ftl_eyre, ftl_println, h, lh, localization::AsFluent,
+    repo::RepoInfo,
 };
 
 use std::borrow::Cow;

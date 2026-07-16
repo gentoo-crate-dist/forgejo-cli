@@ -1,7 +1,7 @@
 use clap::{self, Args};
 use eyre::{Context, OptionExt};
 
-use crate::{ftl_println, repo::RepoInfo, KeyInfo};
+use crate::{KeyInfo, ftl_println, repo::RepoInfo};
 
 #[derive(Args, Clone, Debug)]
 pub struct WhoAmICommand {

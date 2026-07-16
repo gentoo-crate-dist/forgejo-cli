@@ -3,7 +3,7 @@ use std::io::IsTerminal;
 use std::path::PathBuf;
 
 use clap::{Parser, Subcommand};
-use eyre::{eyre, Context, OptionExt};
+use eyre::{Context, OptionExt, eyre};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
 mod keys;
@@ -540,8 +540,8 @@ fn markdown(text: &str) -> String {
     ansi_printer.resume_style();
     let mut iter = render_queue.into_iter().peekable();
     while let Some((item, side)) = iter.next() {
-        use comrak::nodes::NodeValue;
         use Side::*;
+        use comrak::nodes::NodeValue;
         match (&item.data.borrow().value, side) {
             (NodeValue::Paragraph, Start) => (),
             (NodeValue::Paragraph, End) => {

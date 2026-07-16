@@ -1,14 +1,14 @@
 use clap::{Args, Subcommand};
 use eyre::OptionExt;
 use forgejo_api::{
+    Forgejo,
     structs::{
         CreateLabelOption, CreateOrgOption, EditLabelOption, EditOrgOption, OrgListLabelsQuery,
     },
-    Forgejo,
 };
-use futures::{future, TryStreamExt};
+use futures::{TryStreamExt, future};
 
-use crate::{ftl_bail, ftl_eprintln, ftl_print, ftl_println, h, lh, repo::RepoInfo, SpecialRender};
+use crate::{SpecialRender, ftl_bail, ftl_eprintln, ftl_print, ftl_println, h, lh, repo::RepoInfo};
 
 mod team;
 

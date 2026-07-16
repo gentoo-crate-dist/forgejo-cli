@@ -3,13 +3,13 @@ use std::collections::BTreeMap;
 use clap::{Args, Subcommand};
 use eyre::OptionExt;
 use forgejo_api::{
-    structs::{CreateTeamOption, EditTeamOption},
     Forgejo,
+    structs::{CreateTeamOption, EditTeamOption},
 };
-use futures::{future, TryStreamExt};
+use futures::{TryStreamExt, future};
 
 use crate::{
-    ftl_eprintln, ftl_println, ftl_prompt_bool, h, lh, localization::AsFluent, SpecialRender,
+    SpecialRender, ftl_eprintln, ftl_println, ftl_prompt_bool, h, lh, localization::AsFluent,
 };
 
 #[derive(Subcommand, Clone, Debug)]

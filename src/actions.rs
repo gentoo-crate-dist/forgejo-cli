@@ -3,18 +3,17 @@ use std::{collections::BTreeMap, fmt::Display};
 use clap::{Args, Subcommand};
 use eyre::OptionExt;
 use forgejo_api::{
+    Forgejo, ForgejoError,
     structs::{
         ActionVariable, CreateOrUpdateSecretOption, CreateVariableOption, UpdateVariableOption,
     },
-    Forgejo, ForgejoError,
 };
 use hyper::StatusCode;
 use time::Duration;
 
 use crate::{
-    ftl_bail, ftl_eprintln, ftl_println, h,
+    SpecialRender, ftl_bail, ftl_eprintln, ftl_println, h,
     repo::{RepoArg, RepoInfo, RepoName},
-    SpecialRender,
 };
 
 #[derive(Args, Clone, Debug)]

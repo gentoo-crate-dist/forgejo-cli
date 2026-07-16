@@ -5,21 +5,21 @@ use std::{io::Write, str::FromStr};
 use clap::{Args, Subcommand};
 use eyre::{Context, OptionExt};
 use forgejo_api::{
+    Forgejo,
     structs::{
         CreatePullRequestOption, MergePullRequestOption, PullReview, PullReviewComment,
         RepoGetPullRequestCommitsQuery, RepoGetPullRequestFilesQuery, StateType,
     },
-    Forgejo,
 };
 use futures::stream::{StreamExt, TryStreamExt};
 
-use crate::{ftl_bail, ftl_ensure, ftl_eprintln, ftl_eyre, ftl_format, ftl_println, h, lh};
 use crate::{
+    SpecialRender,
     issues::IssueId,
     localization::AsFluent,
     repo::{RepoArg, RepoInfo, RepoName},
-    SpecialRender,
 };
+use crate::{ftl_bail, ftl_ensure, ftl_eprintln, ftl_eyre, ftl_format, ftl_println, h, lh};
 
 #[derive(Args, Clone, Debug)]
 pub struct PrCommand {
@@ -505,7 +505,9 @@ impl PrCommand {
             }
             Checkout { .. } => {
                 if git2::Repository::discover(".").is_ok() {
-                    eyre::eyre!("can't figure out what repo to access, try setting a remote tracking branch")
+                    eyre::eyre!(
+                        "can't figure out what repo to access, try setting a remote tracking branch"
+                    )
                 } else {
                     eyre::eyre!("pr checkout only works if the current directory is a git repo")
                 }
@@ -523,10 +525,10 @@ impl PrCommand {
                 Some(pr) => eyre::eyre!(
                     "can't figure out what repo to access, try specifying with `{{owner}}/{{repo}}#{}`",
                     pr.number
-                    ),
+                ),
                 None => eyre::eyre!(
                     "can't figure out what repo to access, try specifying with `{{owner}}/{{repo}}#{{pr}}`",
-                    ),
+                ),
             },
         }
     }
@@ -1684,7 +1686,9 @@ async fn view_pr_files(repo: &RepoName, api: &Forgejo, pr: Option<i64>) -> eyre:
         let name = file.filename.as_deref().unwrap_or("???");
         let additions = file.additions.unwrap_or_default();
         let deletions = file.deletions.unwrap_or_default();
-        println!("{bright_green}+{additions:<additions_width$} {bright_red}-{deletions:<deletions_width$}{reset} {name}");
+        println!(
+            "{bright_green}+{additions:<additions_width$} {bright_red}-{deletions:<deletions_width$}{reset} {name}"
+        );
     }
     Ok(())
 }
@@ -1753,7 +1757,9 @@ async fn view_pr_commits(
         let deletions = stats.deletions.unwrap_or_default();
 
         if oneline {
-            println!("{yellow}{short_sha} {bright_green}+{additions:<additions_width$} {bright_red}-{deletions:<deletions_width$}{reset} {name}");
+            println!(
+                "{yellow}{short_sha} {bright_green}+{additions:<additions_width$} {bright_red}-{deletions:<deletions_width$}{reset} {name}"
+            );
         } else {
             let author = repo_commit
                 .author
@@ -1766,10 +1772,14 @@ async fn view_pr_commits(
                 .as_ref()
                 .ok_or_eyre("commit as no creation date")?;
 
-            println!("{yellow}commit {sha}{reset} ({bright_green}+{additions}{reset}, {bright_red}-{deletions}{reset})");
+            println!(
+                "{yellow}commit {sha}{reset} ({bright_green}+{additions}{reset}, {bright_red}-{deletions}{reset})"
+            );
             println!("Author: {author_name} <{author_email}>");
             print!("Date:   ");
-            let format = time::macros::format_description!("[weekday repr:short] [month repr:short] [day] [hour repr:24]:[minute]:[second] [year] [offset_hour sign:mandatory][offset_minute]");
+            let format = time::macros::format_description!(
+                "[weekday repr:short] [month repr:short] [day] [hour repr:24]:[minute]:[second] [year] [offset_hour sign:mandatory][offset_minute]"
+            );
             date.format_into(&mut std::io::stdout().lock(), format)?;
             println!();
             println!();

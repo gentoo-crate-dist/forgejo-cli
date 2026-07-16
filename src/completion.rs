@@ -23,8 +23,8 @@ pub enum Shell {
 
 impl CompletionCommand {
     pub fn run(self) {
-        use clap_complete::Shell as CCShell;
         use Shell::*;
+        use clap_complete::Shell as CCShell;
         let mut cmd = crate::App::command();
         let app_name = self.bin_name.as_deref().unwrap_or("fj");
         let mut writer = std::io::stdout();

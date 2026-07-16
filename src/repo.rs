@@ -1,16 +1,16 @@
 use std::{io::Write, path::PathBuf, str::FromStr};
 
 use clap::{Args, Subcommand};
-use eyre::{eyre, Context, OptionExt, Result};
+use eyre::{Context, OptionExt, Result, eyre};
 use forgejo_api::{
-    structs::{CreateRepoOption, Repository},
     ApiError, ApiErrorKind, Forgejo, ForgejoError,
+    structs::{CreateRepoOption, Repository},
 };
 use url::Url;
 
 use crate::{
-    ftl_bail, ftl_eprintln, ftl_eyre, ftl_format, ftl_print, ftl_println, ftl_write, h, lh,
-    DisplayOptional, SpecialRender,
+    DisplayOptional, SpecialRender, ftl_bail, ftl_eprintln, ftl_eyre, ftl_format, ftl_print,
+    ftl_println, ftl_write, h, lh,
 };
 
 pub struct RepoInfo {
@@ -1370,8 +1370,8 @@ impl FromStr for MigrateService {
 
 impl MigrateService {
     fn to_api_type(self) -> forgejo_api::structs::MigrateRepoOptionsService {
-        use forgejo_api::structs::MigrateRepoOptionsService as Api;
         use MigrateService as Cli;
+        use forgejo_api::structs::MigrateRepoOptionsService as Api;
         match self {
             Cli::Git => Api::Git,
             Cli::Github => Api::Github,
