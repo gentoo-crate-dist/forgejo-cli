@@ -437,6 +437,15 @@ pub enum RepoCommand {
         #[clap(long, short = 'R')]
         remote: Option<String>,
     },
+    #[clap(about = h!("cmd-repo-star_status"))]
+    StarStatus {
+        repo: Option<RepoArg>,
+        #[clap(long, short = 'R')]
+        remote: Option<String>,
+        #[clap(help = h!("arg-repo-star_status-list"))]
+        #[clap(long, conflicts_with("repo"))]
+        list: bool,
+    },
     #[clap(about = h!("cmd-repo-watch"))]
     Watch {
         repo: Option<RepoArg>,
@@ -679,6 +688,11 @@ impl RepoCommand {
                 let name = repo
                     .name()
                     .ok_or_else(|| ftl_eyre!("msg-repo-name_needed"))?;
+                let starred = check_repo_star_status(&api, name.owner(), name.name()).await?;
+                if starred {
+                    ftl_println!("msg-repo-star-already_starred");
+                    return Ok(());
+                }
                 api.user_current_put_star(name.owner(), name.name()).await?;
                 ftl_println!(
                     "msg-repo-star-success",
@@ -693,6 +707,11 @@ impl RepoCommand {
                 let name = repo
                     .name()
                     .ok_or_else(|| ftl_eyre!("msg-repo-name_needed"))?;
+                let starred = check_repo_star_status(&api, name.owner(), name.name()).await?;
+                if !starred {
+                    ftl_println!("msg-repo-unstar-already_unstarred");
+                    return Ok(());
+                }
                 api.user_current_delete_star(name.owner(), name.name())
                     .await?;
                 ftl_println!(
@@ -700,6 +719,33 @@ impl RepoCommand {
                     owner = name.owner(),
                     repo = name.name(),
                 );
+            }
+            RepoCommand::StarStatus { repo, remote, list } => {
+                let repo =
+                    RepoInfo::get_current(host_name, repo.as_ref(), remote.as_deref(), keys)?;
+                let api = keys.get_api(repo.host_url()).await?;
+                if list {
+                    let (_, starred_repos) = api.user_current_list_starred().await?;
+                    print_starred(starred_repos.as_slice());
+                    return Ok(());
+                }
+                let name = repo
+                    .name()
+                    .ok_or_else(|| ftl_eyre!("msg-repo-name_needed"))?;
+                let starred = check_repo_star_status(&api, name.owner(), name.name()).await?;
+                if starred {
+                    ftl_println!(
+                        "msg-repo-star_status-starred",
+                        owner = name.owner(),
+                        repo = name.name()
+                    );
+                } else {
+                    ftl_println!(
+                        "msg-repo-star_status-unstarred",
+                        owner = name.owner(),
+                        repo = name.name()
+                    );
+                }
             }
             RepoCommand::Watch { repo, remote } => {
                 let repo =
@@ -1223,6 +1269,25 @@ async fn check_repo_watch_status(api: &Forgejo, owner: &str, repo: &str) -> eyre
     }
 }
 
+async fn check_repo_star_status(api: &Forgejo, owner: &str, repo: &str) -> eyre::Result<bool> {
+    let response = api.user_current_check_starring(owner, repo).await;
+    match response {
+        Ok(_) => Ok(true),
+        Err(ForgejoError::ApiError(ApiError {
+            message: _,
+            kind: ApiErrorKind::NotFound { errors: _ },
+        })) => match api.repo_get(owner, repo).await {
+            Ok(_) => Ok(false),
+            Err(ForgejoError::ApiError(ApiError {
+                message: _,
+                kind: ApiErrorKind::NotFound { errors: _ },
+            })) => Err(ftl_eyre!("msg-repo_not_found")),
+            Err(e) => Err(e.into()),
+        },
+        Err(e) => Err(e.into()),
+    }
+}
+
 fn print_subscriptions(repos: &[Repository]) {
     ftl_println!("msg-repo-watch_status-list-header", count = repos.len());
     for repo in repos {
@@ -1237,6 +1302,19 @@ fn print_subscriptions(repos: &[Repository]) {
             owner = owner,
             repo = name
         );
+    }
+}
+
+fn print_starred(repos: &[Repository]) {
+    ftl_println!("msg-repo-star_status-list-header", count = repos.len());
+    for repo in repos {
+        let owner = repo
+            .owner
+            .as_ref()
+            .and_then(|owner| owner.login.as_deref())
+            .unwrap_or("<>");
+        let name = repo.name.as_deref().unwrap_or("<>");
+        ftl_println!("msg-repo-star_status-list-repo", owner, repo = name);
     }
 }
 

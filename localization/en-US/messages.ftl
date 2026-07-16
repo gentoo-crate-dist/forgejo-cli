@@ -7,6 +7,8 @@
 help-arg-remote = The local git remote that points to the repo to operate on
 help-arg-repo = The repo to operate on
 
+msg-repo_not_found = Could not find the specified repo
+
 msg-whoami = currently signed into {$name}@{$host}
 
 help-cmd-auth-login = Log in to an instance
@@ -865,6 +867,18 @@ msg-repo-star-success = Starred {$owner}/{$repo}!
 
 help-cmd-repo-unstar = Take away a star from a repo
 msg-repo-unstar-success = Removed star from {$owner}/{$repo}!
+
+help-cmd-repo-star_status = Check your current starring status 
+help-arg-repo-star_status-list = List all starred repos instead of checking status
+msg-repo-star-already_starred = You already starred this repo
+msg-repo-unstar-already_unstarred = You already don't star this repo
+msg-repo-star_status-starred = You have starred {$owner}/{$repo}
+msg-repo-star_status-unstarred = You have not starred {$owner}/{$repo}
+msg-repo-star_status-list-header = You star {$count} { $count ->
+        [one] repo
+        *[other] -> repos
+    }
+msg-repo-star_status-list-repo = Starred {$owner}/{$repo}
 
 help-cmd-repo-delete = Delete a repository
 help-cmd-repo-delete-long =
