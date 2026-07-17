@@ -529,6 +529,10 @@ pub enum RepoCommand {
         #[clap(help = h!("arg-repo-edit-avatar"))]
         #[clap(short, long)]
         avatar: Option<PathBuf>,
+
+        #[clap(help = h!("arg-repo-edit-unset_avatar"))]
+        #[clap(short, long, conflicts_with = "avatar")]
+        unset_avatar: bool,
     },
 
     #[clap(about = h!("cmd-repo-units"))]
@@ -922,6 +926,7 @@ impl RepoCommand {
                 template,
                 website,
                 avatar,
+                unset_avatar,
             } => {
                 let repo = RepoInfo::get_current(host_name, repo.as_ref(), None, keys)?;
                 let api = keys.get_api(repo.host_url()).await?;
@@ -959,6 +964,8 @@ impl RepoCommand {
                     };
                     api.repo_update_avatar(repo.owner(), repo.name(), opt)
                         .await?;
+                } else if unset_avatar {
+                    api.repo_delete_avatar(repo.owner(), repo.name()).await?;
                 }
             }
             RepoCommand::Units { repo, cmd } => {
