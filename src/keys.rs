@@ -1,11 +1,13 @@
-use eyre::eyre;
 use forgejo_api::{Auth, Forgejo};
 use std::{
     collections::{BTreeMap, BTreeSet},
     io::ErrorKind,
+    path::Path,
 };
 use tokio::io::AsyncWriteExt;
 use url::Url;
+
+use crate::{ftl_eyre, ftl_println};
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default)]
 pub struct KeyInfo {
@@ -17,17 +19,44 @@ pub struct KeyInfo {
 }
 
 impl KeyInfo {
-    pub async fn load() -> eyre::Result<Self> {
-        let path = directories::ProjectDirs::from("", "Cyborus", "forgejo-cli")
-            .ok_or_else(|| eyre!("Could not find data directory"))?
+    // Try the old path for backwards compatibility
+    // Give this a release or two for users to migrate and then remove this codepath
+    async fn load_fallback(new_path: &Path) -> eyre::Result<Self> {
+        let fallback = directories::ProjectDirs::from("", "Cyborus", "forgejo-cli")
+            .ok_or_else(|| ftl_eyre!("msg-project-dir-not-found"))?
             .data_dir()
             .join("keys.json");
-        let json = tokio::fs::read(path).await;
+        let json = tokio::fs::read(fallback).await;
+        let this = match json {
+            Ok(x) => {
+                ftl_println!("msg-old-key-file-read");
+                serde_json::from_slice::<Self>(&x)?
+            }
+            Err(e) if e.kind() == ErrorKind::NotFound => {
+                ftl_println!("msg-key-file-not-found");
+                return Ok(Self::default());
+            }
+            Err(e) => return Err(e.into()),
+        };
+        if this.save().await.is_err() {
+            ftl_println!(
+                "msg-save-migrated-key-file-fail",
+                path = new_path.to_string_lossy()
+            );
+        }
+        Ok(this)
+    }
+
+    pub async fn load() -> eyre::Result<Self> {
+        let path = directories::ProjectDirs::from("", "forgejo-cli", "forgejo-cli")
+            .ok_or_else(|| ftl_eyre!("msg-project-dir-not-found"))?
+            .data_dir()
+            .join("keys.json");
+        let json = tokio::fs::read(path.as_path()).await;
         let this = match json {
             Ok(x) => serde_json::from_slice::<Self>(&x)?,
             Err(e) if e.kind() == ErrorKind::NotFound => {
-                eprintln!("keys file not found, creating");
-                Self::default()
+                KeyInfo::load_fallback(path.as_path()).await?
             }
             Err(e) => return Err(e.into()),
         };
@@ -36,8 +65,8 @@ impl KeyInfo {
 
     pub async fn save(&self) -> eyre::Result<()> {
         let json = serde_json::to_vec_pretty(self)?;
-        let dirs = directories::ProjectDirs::from("", "Cyborus", "forgejo-cli")
-            .ok_or_else(|| eyre!("Could not find data directory"))?;
+        let dirs = directories::ProjectDirs::from("", "forgejo-cli", "forgejo-cli")
+            .ok_or_else(|| ftl_eyre!("msg-project-dir-not-found"))?;
         let path = dirs.data_dir();
 
         tokio::fs::create_dir_all(path).await?;
