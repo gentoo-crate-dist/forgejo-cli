@@ -231,6 +231,8 @@ pub enum ViewCommand {
     Comment { idx: usize },
     #[clap(about = h!("cmd-issue-view-comments"))]
     Comments,
+    #[clap(about = h!("cmd-issue-view-assignees"))]
+    Assignees,
 }
 
 impl IssueCommand {
@@ -265,6 +267,7 @@ impl IssueCommand {
                 ViewCommand::Body => view_issue(repo, &api, id.number).await?,
                 ViewCommand::Comment { idx } => view_comment(repo, &api, id.number, idx).await?,
                 ViewCommand::Comments => view_comments(repo, &api, id.number).await?,
+                ViewCommand::Assignees => view_assignees(repo, &api, id.number).await?,
             },
             Search {
                 repo: _,
@@ -681,6 +684,27 @@ pub async fn view_comments(repo: &RepoName, api: &Forgejo, id: i64) -> eyre::Res
     for comment in comments {
         print_comment(&comment)?;
         println!();
+    }
+    Ok(())
+}
+
+pub async fn view_assignees(repo: &RepoName, api: &Forgejo, number: i64) -> eyre::Result<()> {
+    let issue = api
+        .issue_get_issue(repo.owner(), repo.name(), number)
+        .await?;
+    let assignees = issue.assignees.unwrap_or_default();
+    if assignees.is_empty() {
+        ftl_println!("msg-view-assignees-empty");
+        return Ok(());
+    }
+    ftl_println!("msg-view-assignees-header", count = assignees.len(),);
+    for user in assignees {
+        let full_name = user.full_name.as_deref().filter(|name| !name.is_empty());
+        let login = user
+            .login
+            .as_ref()
+            .ok_or_else(|| eyre::eyre!("assignee does not have login"))?;
+        ftl_println!("msg-view-assignees-entry", full_name, login);
     }
     Ok(())
 }
