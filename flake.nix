@@ -18,7 +18,7 @@
       rec {
         packages.forgejo-cli = pkgs.rustPlatform.buildRustPackage {
           pname = "forgejo-cli";
-          version = "0.5.0";
+          version = "0.6.0";
           src = pkgs.lib.cleanSource ./.;
 
           cargoLock.lockFile = ./Cargo.lock;
