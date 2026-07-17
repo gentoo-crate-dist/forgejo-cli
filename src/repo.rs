@@ -1,5 +1,6 @@
 use std::{io::Write, path::PathBuf, str::FromStr};
 
+use base64ct::Encoding;
 use clap::{Args, Subcommand};
 use eyre::{Context, OptionExt, Result, eyre};
 use forgejo_api::{
@@ -524,6 +525,14 @@ pub enum RepoCommand {
         #[clap(help = h!("arg-repo-edit-website"))]
         #[clap(short, long)]
         website: Option<String>,
+
+        #[clap(help = h!("arg-repo-edit-avatar"))]
+        #[clap(short, long)]
+        avatar: Option<PathBuf>,
+
+        #[clap(help = h!("arg-repo-edit-unset_avatar"))]
+        #[clap(short, long, conflicts_with = "avatar")]
+        unset_avatar: bool,
     },
 
     #[clap(about = h!("cmd-repo-units"))]
@@ -916,6 +925,8 @@ impl RepoCommand {
                 private,
                 template,
                 website,
+                avatar,
+                unset_avatar,
             } => {
                 let repo = RepoInfo::get_current(host_name, repo.as_ref(), None, keys)?;
                 let api = keys.get_api(repo.host_url()).await?;
@@ -923,23 +934,39 @@ impl RepoCommand {
                     .name()
                     .ok_or_else(|| ftl_eyre!("msg-repo-name_needed"))?;
 
-                api.repo_edit(
-                    repo.owner(),
-                    repo.name(),
-                    forgejo_api::structs::EditRepoOption {
-                        archived,
-                        default_branch,
-                        description,
-                        enable_prune,
-                        mirror_interval,
-                        name,
-                        private,
-                        template,
-                        website,
-                        ..NOOP_EDIT_REPO_OPTION
-                    },
-                )
-                .await?;
+                let edit_opt = forgejo_api::structs::EditRepoOption {
+                    archived,
+                    default_branch,
+                    description,
+                    enable_prune,
+                    mirror_interval,
+                    name,
+                    private,
+                    template,
+                    website,
+                    ..NOOP_EDIT_REPO_OPTION
+                };
+                if edit_opt != NOOP_EDIT_REPO_OPTION {
+                    api.repo_edit(repo.owner(), repo.name(), edit_opt).await?;
+                }
+
+                if let Some(avatar_path) = avatar {
+                    let image = match tokio::fs::read(avatar_path).await {
+                        Ok(image) => image,
+                        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Err(e)
+                            .wrap_err_with(|| ftl_eyre!("msg-repo-edit-avatar_file_not_found"))?,
+                        Err(e) => Err(e)?,
+                    };
+
+                    let image_base64 = base64ct::Base64::encode_string(&image);
+                    let opt = forgejo_api::structs::UpdateRepoAvatarOption {
+                        image: Some(image_base64),
+                    };
+                    api.repo_update_avatar(repo.owner(), repo.name(), opt)
+                        .await?;
+                } else if unset_avatar {
+                    api.repo_delete_avatar(repo.owner(), repo.name()).await?;
+                }
             }
             RepoCommand::Units { repo, cmd } => {
                 let repo = RepoInfo::get_current(host_name, repo.as_ref(), None, keys)?;

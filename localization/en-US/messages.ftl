@@ -939,6 +939,9 @@ help-arg-repo-edit-name = Set the repo's name
 help-arg-repo-edit-private = Set this repository's private status
 help-arg-repo-edit-template = Set if this repository should be a template repository
 help-arg-repo-edit-website = Set a URL for this repository's website
+help-arg-repo-edit-avatar = Path of the image to set the repository's avatar to
+help-arg-repo-edit-unset_avatar = Remove the repo's currently set avatar
+msg-repo-edit-avatar_file_not_found = { $path } does not exist.
 
 help-cmd-repo-units = Manage a repo's units
 
