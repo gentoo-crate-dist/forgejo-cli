@@ -426,15 +426,15 @@ help-cmd-issue-view-comment = View a specific comment
 help-cmd-issue-view-comments = List every comment
 
 help-cmd-issue-view-assignees = List the users assigned to this issue
-msg-issue-view-assignees-header = Assigned to ({ $count ->
+msg-view-assignees-header = Assigned to ({ $count ->
         [one] 1 user
        *[other] {$count} users
     }):
-msg-issue-view-assignees-entry = { OPT($full_name) ->
+msg-view-assignees-entry = { OPT($full_name) ->
        *[none] {-bullet} {$login}
         [some] {-bullet} {$full_name} {STYLE("dark-grey")}({$login}){STYLE("reset")}
     }
-msg-issue-view-assignees-empty = No one is assigned to this issue.
+msg-view-assignees-empty = No one is assigned.
 
 help-cmd-issue-search = Search for an issue in a repo
 help-arg-issue-search-repo = The repo to search in
@@ -560,6 +560,8 @@ help-arg-pr-view-comment-idx = The index of the comment to view, 0-indexed
 help-cmd-pr-view-comments = View all comments on a pull request
 
 help-cmd-pr-view-labels = View the labels applied to a pull request
+
+help-cmd-pr-view-assignees = List the users assigned to this pull request
 
 help-cmd-pr-view-diff = View the diff between the base and head branches of a pull request
 help-arg-pr-view-diff-patch = Get the diff in patch format

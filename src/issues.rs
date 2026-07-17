@@ -692,11 +692,11 @@ pub async fn view_assignees(repo: &RepoName, api: &Forgejo, number: i64) -> eyre
     let issue = api.issue_get_issue(repo.owner(), repo.name(), number).await?;
     let assignees = issue.assignees.unwrap_or_default();
     if assignees.is_empty() {
-        ftl_println!("msg-issue-view-assignees-empty");
+        ftl_println!("msg-view-assignees-empty");
         return Ok(());
     }
     ftl_println!(
-        "msg-issue-view-assignees-header",
+        "msg-view-assignees-header",
         count = assignees.len(),
     );
     for user in assignees {
@@ -705,7 +705,7 @@ pub async fn view_assignees(repo: &RepoName, api: &Forgejo, number: i64) -> eyre
             .login
             .as_ref()
             .ok_or_else(|| eyre::eyre!("assignee does not have login"))?;
-        ftl_println!("msg-issue-view-assignees-entry", full_name, login);
+        ftl_println!("msg-view-assignees-entry", full_name, login);
     }
     Ok(())
 }

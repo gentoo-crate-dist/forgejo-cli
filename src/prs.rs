@@ -293,6 +293,8 @@ pub enum ViewCommand {
     Comments,
     #[clap(about = h!("cmd-pr-view-labels"))]
     Labels,
+    #[clap(about = h!("cmd-pr-view-assignees"))]
+    Assignees,
     #[clap(about = h!("cmd-pr-view-diff"))]
     Diff {
         #[clap(help = h!("arg-pr-view-diff-patch"))]
@@ -390,6 +392,10 @@ impl PrCommand {
                         crate::issues::view_comments(&repo, &api, id).await?
                     }
                     ViewCommand::Labels => view_pr_labels(repo, &api, id).await?,
+                    ViewCommand::Assignees => {
+                        let (repo, id) = try_get_pr_number(repo, &api, id).await?;
+                        crate::issues::view_assignees(&repo, &api, id).await?
+                    }
                     ViewCommand::Diff { patch, editor } => {
                         view_diff(repo, &api, id, patch, editor).await?
                     }
