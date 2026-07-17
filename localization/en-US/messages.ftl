@@ -3,6 +3,11 @@
         [yes] -
        *[no] —
     }
+-bullet =
+    { IS_MINIMAL() ->
+        [yes] -
+       *[no] •
+    }
 
 help-arg-remote = The local git remote that points to the repo to operate on
 help-arg-repo = The repo to operate on
@@ -419,6 +424,17 @@ msg-issue-view-comment_count = { $comments ->
 help-cmd-issue-view-comment = View a specific comment
 
 help-cmd-issue-view-comments = List every comment
+
+help-cmd-issue-view-assignees = List the users assigned to this issue
+msg-issue-view-assignees-header = Assigned to ({ $count ->
+        [one] 1 user
+       *[other] {$count} users
+    }):
+msg-issue-view-assignees-entry = { OPT($full_name) ->
+       *[none] {-bullet} {$login}
+        [some] {-bullet} {$full_name} {STYLE("dark-grey")}({$login}){STYLE("reset")}
+    }
+msg-issue-view-assignees-empty = No one is assigned to this issue.
 
 help-cmd-issue-search = Search for an issue in a repo
 help-arg-issue-search-repo = The repo to search in
