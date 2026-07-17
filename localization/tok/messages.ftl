@@ -557,3 +557,4 @@ help-arg-org-label-add-exclusive = nimi ona li sama { "'{nimi suli}/{nimi lili}'
 help-cmd-org-label-edit = o ante e kule kulupu
 help-arg-org-label-edit-org = o ante e kule pi kulupu seme
 help-arg-org-label-edit-name = o ante e kule seme
+help-arg-remote = o kepeken poki Git weka seme
