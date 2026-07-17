@@ -689,16 +689,15 @@ pub async fn view_comments(repo: &RepoName, api: &Forgejo, id: i64) -> eyre::Res
 }
 
 pub async fn view_assignees(repo: &RepoName, api: &Forgejo, number: i64) -> eyre::Result<()> {
-    let issue = api.issue_get_issue(repo.owner(), repo.name(), number).await?;
+    let issue = api
+        .issue_get_issue(repo.owner(), repo.name(), number)
+        .await?;
     let assignees = issue.assignees.unwrap_or_default();
     if assignees.is_empty() {
         ftl_println!("msg-view-assignees-empty");
         return Ok(());
     }
-    ftl_println!(
-        "msg-view-assignees-header",
-        count = assignees.len(),
-    );
+    ftl_println!("msg-view-assignees-header", count = assignees.len(),);
     for user in assignees {
         let full_name = user.full_name.as_deref().filter(|name| !name.is_empty());
         let login = user
