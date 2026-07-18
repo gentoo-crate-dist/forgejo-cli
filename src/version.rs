@@ -1,5 +1,5 @@
 #[cfg(feature = "update-check")]
-use crate::ftl_println;
+use crate::{ftl_println, h};
 use clap::Args;
 #[cfg(feature = "update-check")]
 use eyre::OptionExt;
