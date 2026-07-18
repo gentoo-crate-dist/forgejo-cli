@@ -144,7 +144,6 @@ pub async fn get_client_info_for(url: &url::Url) -> eyre::Result<Option<String>>
         "codeberg.org" => "19ac3dd0-e101-445d-aa60-d8ea3876bc5d",
         "code.forgejo.org" => "ab67d8a2-72bd-42e8-ae05-937eaba31e24",
         "v11.next.forgejo.org" => "0df6d672-fe05-4c9a-a5a9-e111e4905e14",
-        "v12.next.forgejo.org" => "df333c23-09a7-41ee-ad52-de673166dbb8",
         "v13.next.forgejo.org" => "ef27a227-65f4-4bcb-be56-f8c9b44457b0",
         "v14.next.forgejo.org" => "2dc5d6d7-01b0-47b4-814e-b4b60aea2376",
         "v15.next.forgejo.org" => "344998d8-4139-4a51-8ef9-a5fa40673ea5",
