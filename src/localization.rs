@@ -78,7 +78,7 @@ pub mod bundles {
         match lang.language.as_str() {
             "en" => const { &[&EN_US] },
             #[cfg(feature = "locale.de-DE")]
-            "de" => const { &[&DE_DE] },
+            "de" => const { &[&DE_DE, &EN_US] },
             #[cfg(feature = "locale.fi")]
             "fi" => const { &[&FI, &EN_US] },
             #[cfg(feature = "locale.fr")]
@@ -93,7 +93,7 @@ pub mod bundles {
             "tok" => const { &[&TOK, &EN_US] },
             // match on lang.script here once more scripts are added
             #[cfg(feature = "locale.zh-Hans")]
-            "zh" => const { &[&ZH_HANS] },
+            "zh" => const { &[&ZH_HANS, &EN_US] },
             _ => const { &[&EN_US] },
         }
     }
