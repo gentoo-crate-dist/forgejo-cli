@@ -56,7 +56,7 @@ steps:
         from_secret: token
     commands:
       - export FORGE_HOST=$(echo $CI_FORGE_URL | sed -E 's_^https?://__')
-      - fj --host $CI_FORGE_URL auth add-key $CI_REPO_OWNER $TOKEN
+      - fj --host $CI_FORGE_URL auth add-token $TOKEN
       - fj release --repo $CI_REPO_URL asset create $CI_COMMIT_TAG forgejo-cli-x86_64-windows.zip
       - fj release --repo $CI_REPO_URL asset create $CI_COMMIT_TAG forgejo-cli-x86_64-linux.tar.gz
       - fj release --repo $CI_REPO_URL asset create $CI_COMMIT_TAG forgejo-cli-aarch64-linux.tar.gz
