@@ -619,7 +619,7 @@ dependencies = [
 
 [[package]]
 name = "forgejo-cli"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "auth-git2",
  "base64ct",
